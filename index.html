@@ -6,11 +6,9 @@
 <title>Calendario Cloud Sincronizzato</title>
 
 <link rel="icon" href="https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png" type="image/png">
-
 <link rel="apple-touch-icon" href="https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Calendario">
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -18,10 +16,11 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0; touch-action: manipulation;}
   body{font-family:Arial, sans-serif;background:#f4f4f4;color:#333;padding:1rem; -webkit-text-size-adjust: 100%;}
-  h1{font-size:18px;margin-bottom:1rem;text-align:center}
+  
   .toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1rem;background:#fff;padding:10px;border-radius:8px;position:sticky;top:0;z-index:10}
   select, button{height:34px;padding:0 10px;border-radius:6px;border:1px solid #ccc;cursor:pointer;font-size:13px;}
-  button.undo-btn{background:#f39c12;color:#fff;border:none;display:none}
+  button.undo-btn{background:#f39c12;color:#fff;border:none;}
+  
   .cal-grid{display:flex;flex-direction:column;gap:20px;align-items:center}
   .month-block{background:#fff;width:100%;max-width:900px;border:2px solid #333;border-radius:4px;overflow:hidden; scroll-margin-top: 60px;}
   .month-header{padding:8px;background:#fff;border-bottom:1px solid #333;font-weight:bold;text-align:center}
@@ -31,7 +30,6 @@
   
   .cell { 
     border-right: 1px solid #bbb; 
-    height: 50px; 
     cursor: pointer; 
     overflow: hidden; 
     padding: 2px;
@@ -39,41 +37,45 @@
   .cell:last-child { border-right: none; }
   .cell.empty { background: #fafafa!important; cursor: default; }
   
+  /* Cella Giorno: Altezza ridotta (30px) e Font molto grande (18px) */
   .day-cell { 
+    height: 30px; 
     border-bottom: 1px solid #eee; 
     display: flex;
     align-items: center; 
     justify-content: center;
     position: relative; 
   }
-  .day-num { font-weight: bold; font-size: 13px; }
+  .day-num { font-weight: bold; font-size: 18px; }
 
+  /* Cella Nota: Molto più spazio (70px) e Font aumentato (12px) */
   .note-cell { 
+    height: 70px; 
     border-bottom: 1px solid #333; 
     background: #fff; 
-    font-size: 9px; 
+    font-size: 12px; 
     text-align: center;
-    line-height: 1.1;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
-  .today-ring { outline: 3px solid #000; outline-offset: -3px; z-index: 2; }
+  .today-ring { outline: 3px solid #000 !important; outline-offset: -3px; z-index: 2; }
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100}
   .modal{background:#fff;border-radius:8px;padding:15px;width:320px;max-width:90vw;}
-  textarea{width:100%;height:70px;margin:8px 0;padding:8px;border-radius:4px;border:1px solid #ccc;resize:none;font-size:16px !important;}
+  textarea{width:100%;height:80px;margin:8px 0;padding:8px;border-radius:4px;border:1px solid #ccc;resize:none;font-size:16px !important;}
   .color-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-  .color-opt{height:35px;border-radius:4px;cursor:pointer;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;text-align:center;font-size:8px;font-weight:bold;padding:2px;}
-  .color-opt.selected{border:2px solid #000}
+  .color-opt{height:38px;border-radius:4px;cursor:pointer;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;font-weight:bold;padding:2px;color:#fff;}
 </style>
 </head>
 <body>
-
-<h1>Calendario Cloud 2024–2080</h1>
 
 <div class="toolbar">
   <select id="yearSel"></select>
   <button onclick="scrollToToday()">📅 Oggi</button>
   <button onclick="location.reload()">🔄 Aggiorna</button>
-  <button id="undoBtn" class="undo-btn" onclick="undo()">↩ Annulla</button>
+  <button id="undoBtn" class="undo-btn" onclick="undo()">↩ Annulla (Ctrl+Z)</button>
   <span id="syncStatus" style="font-size:11px; color:#538135; margin-left:10px">☁️ Connessione...</span>
 </div>
 
@@ -82,10 +84,10 @@
 
 <div class="modal-bg" id="modal" style="display:none" onclick="if(event.target.id==='modal')closeModal()">
   <div class="modal">
-    <h4 id="modalTitle" style="margin-bottom:8px"></h4>
+    <h4 id="modalTitle" style="margin-bottom:8px; color:#333"></h4>
     <div class="color-grid" id="colorGrid"></div>
     <textarea id="modalText" placeholder="Scrivi qui..." oninput="autoSaveText()"></textarea>
-    <button style="width:100%; background:#eee; padding:8px; border-radius:4px; border:1px solid #ccc" onclick="closeModal()">Chiudi</button>
+    <button style="width:100%; background:#eee; padding:10px; border-radius:4px; border:1px solid #ccc; font-weight:bold; color:#333" onclick="closeModal()">CHIUDI E SALVA</button>
   </div>
 </div>
 
@@ -104,14 +106,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
+// MENU COLORI E TASTI RAPIDI
 const COLORS = [
   {id:'none', label:'Bianco', hex:'#ffffff', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex:'#BDD7EE', autoText: '', isAdd: false},
   {id:'pomeriggio', label:'Pom.', hex:'#FFA500', autoText: '', isAdd: false},
   {id:'smart', label:'Smart', hex:'#e74c3c', autoText: '', isAdd: false},
   {id:'ferie', label:'Ferie', hex:'#2c3e50', autoText: '', isAdd: false},
-  {id:'treno1', label:'Treno 8.52', hex:'#ffffff', autoText: 'Treno 8.52', isAdd: false},
-  {id:'treno2', label:'Treno 15.05', hex:'#ffffff', autoText: 'Treno 15.05', isAdd: false},
+  {id:'treno1', label:'🚂 8.52', hex:'#ffffff', autoText: '🚂 8.52', isAdd: false}, // Treno con Emoji e sfondo bianco
+  {id:'treno2', label:'🚂 15.05', hex:'#ffffff', autoText: '🚂 15.05', isAdd: false}, // Treno con Emoji e sfondo bianco
+  {id:'corso', label:'Corso', hex:'#007bff', autoText: 'Corso', isAdd: false}, // Nuovo tasto Corso Blu
   {id:'allatto', label:'Allatto', hex:'#8e44ad', autoText: '🟣', isAdd: true},
   {id:'festivita', label:'Festività', hex:'#bdc3c7', autoText: '', isAdd: false}
 ];
@@ -120,7 +124,7 @@ const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO'
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
 let db = {}; 
-let history = []; 
+let historyStack = []; 
 let currentYear = new Date().getFullYear();
 let activeKey = null;
 let activeColor = 'none';
@@ -131,24 +135,33 @@ database.ref('calendario_dati').on('value', (snapshot) => {
   document.getElementById('syncStatus').textContent = '☁️ Sincronizzato';
 });
 
-function pushToCloud() {
-  database.ref('calendario_dati').set(db);
-  document.getElementById('syncStatus').textContent = '☁️ Salvataggio...';
+// LOGICA UNDO (Ctrl+Z) SISTEMATA
+function saveState() {
+  const currentState = JSON.stringify(db);
+  if (historyStack.length === 0 || historyStack[historyStack.length - 1] !== currentState) {
+    historyStack.push(currentState);
+    if(historyStack.length > 25) historyStack.shift();
+  }
 }
 
-function pushHistory() {
-  history.push(JSON.stringify(db));
-  if(history.length > 10) history.shift();
-  document.getElementById('undoBtn').style.display = 'inline-block';
+function pushToCloud() {
+  database.ref('calendario_dati').set(db);
 }
 
 function undo() {
-  if(history.length > 0) {
-    db = JSON.parse(history.pop());
-    if(history.length === 0) document.getElementById('undoBtn').style.display = 'none';
+  if(historyStack.length > 0) {
+    db = JSON.parse(historyStack.pop());
     pushToCloud();
+    render();
   }
 }
+
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { 
+        e.preventDefault(); 
+        undo(); 
+    }
+});
 
 const REF_DATE = new Date(2027, 0, 4);
 function getAutoColor(y, m, d) {
@@ -163,7 +176,7 @@ function render() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
   const today = new Date();
-  const ty = today.getFullYear(), tm = today.getMonth()+1, td = today.getDate();
+  const ty = today.getFullYear(), tm = today.getMonth(), td = today.getDate();
 
   for(let m=1; m<=12; m++) {
     const daysInM = new Date(currentYear, m, 0).getDate();
@@ -181,15 +194,20 @@ function render() {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
           const k = `${currentYear}-${m}-${cd}-top`;
-          const isToday = currentYear===ty && m===tm && cd===td;
+          const isT = currentYear===ty && (m-1)===tm && cd===td;
           const user = db[k] || {};
           let bg = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : '';
           if(!bg) {
             const dow = new Date(currentYear, m-1, cd).getDay();
             bg = (dow===0 || dow===6) ? '#F2F2F2' : getAutoColor(currentYear, m, cd);
           }
-          h += `<div class="cell day-cell ${isToday?'today-ring':''}" style="background:${bg}" onclick="openEdit('${k}',${cd},${m})">
-            <span class="day-num">${cd}</span>${(user.text||'').replace(/\n/g,'<br>')}</div>`;
+          // Controllo Testo Bianco/Nero solo per i colori esatti
+          const isDark = bg==='#e74c3c' || bg==='#2c3e50' || bg==='#007bff' || bg==='#8e44ad';
+          const textCol = isDark ? '#fff' : '#333';
+          const shadow = isDark ? 'text-shadow: 1px 1px 2px rgba(0,0,0,0.6);' : '';
+          
+          h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bg}; color:${textCol}; ${shadow}" onclick="openEdit('${k}',${cd},${m})">
+            <span class="day-num">${cd}</span></div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div><div class="note-row">`;
@@ -199,7 +217,12 @@ function render() {
           const k = `${currentYear}-${m}-${cd}-bottom`;
           const user = db[k] || {};
           const bg = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : '#ffffff';
-          h += `<div class="cell note-cell" style="background:${bg}" onclick="openEdit('${k}',${cd},${m})">${(user.text||'').replace(/\n/g,'<br>')}</div>`;
+          
+          const isDark = bg==='#e74c3c' || bg==='#2c3e50' || bg==='#007bff' || bg==='#8e44ad';
+          const textCol = isDark ? '#fff' : '#333';
+          const shadow = isDark ? 'text-shadow: 1px 1px 2px rgba(0,0,0,0.6);' : '';
+          
+          h += `<div class="cell note-cell" style="background:${bg}; color:${textCol}; ${shadow}" onclick="openEdit('${k}',${cd},${m})">${(user.text||'').replace(/\n/g,'<br>')}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div>`;
@@ -210,6 +233,7 @@ function render() {
 }
 
 function openEdit(k, d, m) {
+  saveState(); // Salva lo stato PRIMA di fare qualsiasi modifica (Per Undo)
   activeKey = k;
   const user = db[k] || {};
   activeColor = user.color || 'none';
@@ -220,11 +244,12 @@ function openEdit(k, d, m) {
 }
 
 function renderColors() {
-  document.getElementById('colorGrid').innerHTML = COLORS.map(c => `
-    <div class="color-opt ${activeColor===c.id?'selected':''}" style="background:${c.hex}" onclick="selectColor('${c.id}')">
-        <span style="color:${c.id==='allatto' || c.id==='ferie' ? '#fff' : '#333'}">${c.label}</span>
-    </div>
-  `).join('');
+  document.getElementById('colorGrid').innerHTML = COLORS.map(c => {
+    const isDark = c.hex==='#e74c3c' || c.hex==='#2c3e50' || c.hex==='#007bff' || c.hex==='#8e44ad';
+    return `<div class="color-opt ${activeColor===c.id?'selected':''}" style="background:${c.hex}; border:${activeColor===c.id?'3px solid #000':'1px solid #ccc'}" onclick="selectColor('${c.id}')">
+        <span style="color:${isDark ? '#fff' : '#333'}">${c.label}</span>
+    </div>`;
+  }).join('');
 }
 
 function selectColor(id) {
@@ -247,6 +272,7 @@ function selectColor(id) {
   
   pushToCloud();
   if (!colorObj.isAdd) closeModal();
+  else renderColors();
 }
 
 function autoSaveText() {
@@ -277,9 +303,7 @@ function scrollToToday() {
   render();
   setTimeout(() => { 
     const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
-    if(target) {
-        target.scrollIntoView({behavior:'smooth', block:'start'});
-    }
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
   }, 250);
 }
 window.onload = scrollToToday;
