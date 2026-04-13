@@ -21,12 +21,12 @@
 <style>
   /* Variabili per Tema Chiaro e Scuro */
   :root {
-    --primary: #7C3AED; /* Viola Moderno */
+    --primary: #7C3AED;
     --bg: #F3F4F6; 
     --card-bg: #ffffff;
     --text-main: #374151; 
     --border-color: #D1D5DB; 
-    --grid-border: #6B7280; /* Bordo griglia grigio scuro */
+    --grid-border: #6B7280;
     --modal-bg: #ffffff;
     --toolbar-bg: rgba(255, 255, 255, 0.85);
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
@@ -41,7 +41,7 @@
   }
 
   body.dark-mode {
-    --primary: #8B5CF6; /* Viola luminoso su scuro */
+    --primary: #8B5CF6;
     --bg: #111827;
     --card-bg: #1F2937;
     --text-main: #E5E7EB;
@@ -62,50 +62,21 @@
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
   body { background: var(--bg); color: var(--text-main); padding: 1rem; padding-top: 80px; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; }
 
-  /* --- STILI LOGIN --- */
-  #loginScreen {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 1000; padding: 20px;
-  }
-  .login-card {
-    background: var(--card-bg); padding: 40px 30px; border-radius: 24px;
-    box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center;
-    border: 1px solid var(--border-color);
-  }
+  /* Login Screen */
+  #loginScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .login-card { background: var(--card-bg); padding: 40px 30px; border-radius: 24px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); }
   .login-card h2 { margin-bottom: 8px; color: var(--primary); font-weight: 700; }
   .login-card p { margin-bottom: 24px; font-size: 14px; color: var(--text-main); opacity: 0.8; }
-  .login-input {
-    width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 12px;
-    border: 1px solid var(--border-color); background: var(--bg); color: var(--text-main);
-    font-size: 15px; outline: none; transition: border 0.2s;
-  }
+  .login-input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg); color: var(--text-main); font-size: 15px; outline: none; transition: border 0.2s; }
   .login-input:focus { border-color: var(--primary); }
-  .login-btn {
-    width: 100%; padding: 14px; border-radius: 12px; background: var(--primary);
-    color: white; border: none; font-size: 16px; font-weight: 600; cursor: pointer;
-  }
+  .login-btn { width: 100%; padding: 14px; border-radius: 12px; background: var(--primary); color: white; border: none; font-size: 16px; font-weight: 600; cursor: pointer; }
   .error-msg { color: #E74C3C; font-size: 13px; margin-top: 10px; min-height: 20px; }
 
   #appContent { display: none; }
 
   /* Toolbar */
-  .toolbar {
-    position: fixed; top: 0; left: 0; right: 0;
-    background: var(--toolbar-bg);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    display: flex; flex-wrap: wrap; gap: 8px;
-    justify-content: center; align-items: center;
-    padding: 12px; z-index: 100;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  select, button {
-    height: 38px; padding: 0 16px; border-radius: 10px;
-    border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
-    cursor: pointer; font-size: 13px; font-weight: 500;
-    transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-  }
+  .toolbar { position: fixed; top: 0; left: 0; right: 0; background: var(--toolbar-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 12px; z-index: 100; border-bottom: 1px solid var(--border-color); }
+  select, button { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
   button:active { transform: scale(0.96); }
   button.undo-btn { background: #F59E0B; color: white; border: none; font-weight: 600; }
   button.today-btn { background: var(--primary); color: white; border: none; font-weight: 600; }
@@ -113,116 +84,97 @@
   button.logout-btn { background: #E74C3C; color: white; border: none; font-weight: 600; }
   body.dark-mode button.dark-btn { background: #F3F4F6; color: #111827; }
 
-  /* Grid e Cards */
+  /* Grid e Cards - Layout Base Desktop */
   .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; margin-top: 10px; }
-  .month-block {
-    background: var(--default-cell-bg);
-    width: 100%; max-width: 900px;
-    border-radius: var(--radius); overflow: hidden;
-    box-shadow: var(--shadow); scroll-margin-top: 100px;
-    border: 1px solid var(--grid-border); 
+  
+  .month-block { 
+    background: var(--default-cell-bg); width: 100%; max-width: 900px; 
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); 
+    border: 1px solid var(--grid-border); scroll-margin-top: 80px;
   }
-  .month-header {
-    padding: 16px; font-size: 18px; font-weight: 600;
-    text-align: center; color: var(--primary); background: var(--header-bg);
-    border-bottom: 1px solid var(--grid-border); transition: background 0.3s;
-  }
+  
+  .month-header { padding: 16px; font-size: 18px; font-weight: 600; text-align: center; color: var(--primary); background: var(--header-bg); border-bottom: 1px solid var(--grid-border); transition: background 0.3s; }
   .days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--primary); border-bottom: 1px solid var(--grid-border); }
   .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .week-row, .note-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-
-  .cell {
-    border-right: 1px solid var(--grid-border); 
-    cursor: pointer; overflow: hidden; transition: filter 0.2s;
-  }
+  .cell { border-right: 1px solid var(--grid-border); cursor: pointer; overflow: hidden; transition: filter 0.2s; }
   .cell:hover { filter: brightness(0.95); }
   .week-row .cell:last-child, .note-row .cell:last-child { border-right: none; }
   .cell.empty { background: var(--empty-bg) !important; cursor: default; transition: background 0.3s; }
 
   /* Giorno */
-  .day-cell {
-    height: 38px; border-bottom: 1px solid var(--grid-border);
-    display: flex; align-items: center; justify-content: center; transition: background 0.3s;
-  }
+  .day-cell { height: 38px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
   .day-num { font-weight: 600; font-size: 17px; } 
 
-  /* Note Formattate a Task */
-  .note-cell {
-    height: 95px; /* Aumentato spazio per ospitare i task */
-    border-bottom: 1px solid var(--grid-border);
-    font-size: 11px; font-weight: 500; 
-    text-align: left; /* Allineamento a sinistra per i bullet point */
-    padding: 6px; 
-    display: block; /* Modificato per permettere l'incolonnamento */
-    line-height: 1.4; transition: background 0.3s;
-    overflow-y: auto; /* Aggiunge lo scroll se ci sono troppi task */
-  }
-  
-  /* Stile barra di scorrimento delle note */
+  /* Note (Task Style) */
+  .note-cell { height: 95px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
   .note-cell::-webkit-scrollbar { width: 4px; }
   .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
   body.dark-mode .note-cell::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
-
-  /* Ring Giorno Odierno INGRANDITO */
+  
+  /* Ring OGGI Ingrandito */
   .today-ring { position: relative; }
-  .today-ring::after {
-    content: ''; position: absolute; 
-    inset: -1px; /* Estende il ring fuori dai bordi */
-    border: 3px solid var(--primary); /* Più spesso */
-    border-radius: 4px; pointer-events: none; z-index: 10;
-  }
+  .today-ring::after { content: ''; position: absolute; inset: -1px; border: 3px solid var(--primary); border-radius: 4px; pointer-events: none; z-index: 10; }
   
   .cell.selected { position: relative; }
-  .cell.selected::after {
-    content: ''; position: absolute; inset: 0;
-    background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary);
-    pointer-events: none; z-index: 5;
-  }
+  .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
 
   /* Modal */
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center; z-index: 200;
-    opacity: 0; visibility: hidden; transition: all 0.2s ease;
-  }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
   .modal-bg.active { opacity: 1; visibility: visible; }
-  
-  .modal {
-    background: var(--modal-bg); border-radius: 24px; padding: 24px;
-    width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    border: 1px solid var(--border-color);
-  }
+  .modal { background: var(--modal-bg); border-radius: 24px; padding: 24px; width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border-color); }
   .modal-bg.active .modal { transform: translateY(0); }
-
-  textarea {
-    width: 100%; height: 90px; margin: 15px 0; padding: 12px;
-    border-radius: 12px; border: 1px solid var(--border-color); resize: none;
-    font-size: 15px; font-weight: 500; transition: border-color 0.2s;
-    background: var(--bg); color: var(--text-main);
-  }
+  textarea { width: 100%; height: 90px; margin: 15px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); resize: none; font-size: 15px; font-weight: 500; transition: border-color 0.2s; background: var(--bg); color: var(--text-main); }
   textarea:focus { border-color: var(--primary); outline: none; background: var(--card-bg); }
-
   .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-  .color-opt {
-    height: 42px; border-radius: 10px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    text-align: center; font-size: 12px; font-weight: 600;
-    border: 1px solid var(--border-color); transition: transform 0.1s;
-  }
+  .color-opt { height: 42px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); transition: transform 0.1s; }
   .color-opt:active { transform: scale(0.92); }
-  .btn-save {
-    width: 100%; background: var(--primary); color: white;
-    padding: 14px; border-radius: 12px; border: none;
-    font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px;
-  }
+  .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
 
+  /* =========================================
+     📱 OTTIMIZZAZIONI MOBILE ESTREME 
+     (Fit-to-screen intelligente)
+     ========================================= */
   @media (max-width: 600px) {
-    body { padding: 0.5rem; padding-top: 110px; }
-    .day-num { font-size: 15px; }
-    .note-cell { font-size: 10px; height: 85px; } /* Proporzionato al mobile */
+    /* Resettiamo il body per il calcolo dell'altezza */
+    body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
+
+    /* Riduciamo l'impatto della toolbar */
+    .toolbar { padding: 6px; gap: 4px; }
+    select, button { height: 32px; padding: 0 8px; font-size: 11px; }
+    #syncStatus { display: none; } /* Nascosto su mobile per recuperare spazio */
+
+    .cal-grid { gap: 15px; margin-top: 5px; }
+
+    /* Magia Flexbox: calcola l'altezza esatta della schermata meno l'ingombro della toolbar */
+    .month-block {
+      height: calc(100vh - 70px); 
+      display: flex; 
+      flex-direction: column;
+      scroll-margin-top: 65px; /* Offset perfetto per evitare che il mese venga coperto dalla barra */
+      border-radius: 12px;
+    }
+
+    /* Fissiamo l'altezza delle intestazioni, non devono schiacciarsi */
+    .month-header { flex: 0 0 auto; padding: 6px; font-size: 15px; }
+    .days-header { flex: 0 0 auto; }
+    .day-name { padding: 4px 0; font-size: 9px; }
+
+    /* Riga dei Numeri: altezza fissa e ridotta */
+    .week-row { flex: 0 0 26px; }
+    
+    /* Riga delle Note: si espande e si contrae per riempire l'altezza del mese (fit-to-screen) */
+    .note-row { flex: 1 1 0; min-height: 0; }
+
+    .day-cell { height: 100%; }
+    .day-num { font-size: 13px; }
+
+    .note-cell { height: 100%; font-size: 9px; padding: 3px 2px; }
+    .note-cell > div { margin-bottom: 2px; }
+    
+    /* Ring proporzionato */
+    .today-ring::after { inset: 0px; border-width: 2px; }
   }
 </style>
 </head>
@@ -240,7 +192,7 @@
 </div>
 
 <div id="appContent">
-  <div class="toolbar">
+  <div class="toolbar" id="mainToolbar">
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
     <button class="dark-btn" onclick="toggleDarkMode()">🌓 Tema</button>
@@ -301,7 +253,7 @@ auth.onAuthStateChanged(user => {
           render();
           
           if (initialLoad) {
-             scrollToToday();
+             setTimeout(scrollToToday, 300); // Piccolo delay per permettere al DOM di renderizzarsi
              initialLoad = false;
              setupPointerEvents();
           }
@@ -447,7 +399,6 @@ function selectBulkColor(id, event) {
       tempBulkText = '';
       document.getElementById('modalText').value = '';
   } else if (colorObj.autoText) {
-      // Inserisce il testo mandando a capo come fosse un nuovo Task
       tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
       document.getElementById('modalText').value = tempBulkText;
   }
@@ -562,7 +513,7 @@ function render() {
 
           // Parsing per formattare come Task List
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
-          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+          const htmlTasks = lines.map(l => `<div style="display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
 
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
@@ -585,12 +536,14 @@ function scrollToToday() {
   setTimeout(() => { 
     const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
     if(target) {
-        // Offset aggiunto per tenere conto della toolbar fissa
-        const offset = 80; 
+        // Calcola l'altezza dinamica della toolbar
+        const toolbarHeight = document.getElementById('mainToolbar').offsetHeight;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = target.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - offset;
+        
+        // Sottrae l'altezza della toolbar + un piccolo offset estetico (10px)
+        const offsetPosition = (elementRect - bodyRect) - toolbarHeight - 10;
+        
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }, 250);
