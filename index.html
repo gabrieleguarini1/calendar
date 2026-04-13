@@ -116,8 +116,11 @@
     border-right: 1px solid var(--grid-border); 
     cursor: pointer; overflow: hidden; transition: filter 0.2s;
   }
+  /* Rimuove il bordo destro dall'ultima cella di ogni riga */
+  .week-row .cell:last-child, .note-row .cell:last-child {
+    border-right: none;
+  }
   .cell:hover { filter: brightness(0.95); }
-  .cell:last-child { border-right: none; }
   .cell.empty { background: var(--empty-bg) !important; cursor: default; transition: background 0.3s; }
 
   /* Giorno e Note */
@@ -242,8 +245,8 @@ const COLORS = [
   {id:'pomeriggio', label:'Pom.', hex:'#F5CBA7', autoText: '', isAdd: false}, 
   {id:'smart', label:'Smart', hex:'#E74C3C', autoText: '', isAdd: false},
   {id:'ferie', label:'Ferie', hex:'#566573', autoText: '', isAdd: false},
-  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: false},
-  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: false},
+  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: 'Treno 8.52', isAdd: false},
+  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: 'Treno 15.05', isAdd: false},
   {id:'corso', label:'Corso', hex:'#3498DB', autoText: 'Corso', isAdd: false},
   {id:'allatto', label:'Allatto', hex:'#9B59B6', autoText: '🟣', isAdd: true},
   {id:'festivita', label:'Festività', hex:'#A7F3D0', autoText: '', isAdd: false} // Festività: Verde Chiaro Moderno
