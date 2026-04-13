@@ -62,71 +62,168 @@
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
   body { background: var(--bg); color: var(--text-main); padding: 1rem; padding-top: 80px; -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s; }
 
-  /* Login Screen */
-  #loginScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-  .login-card { background: var(--card-bg); padding: 40px 30px; border-radius: 24px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); }
+  /* --- STILI LOGIN --- */
+  #loginScreen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .login-card {
+    background: var(--card-bg); padding: 40px 30px; border-radius: 24px;
+    box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center;
+    border: 1px solid var(--border-color);
+  }
   .login-card h2 { margin-bottom: 8px; color: var(--primary); font-weight: 700; }
-  .login-input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg); color: var(--text-main); font-size: 15px; outline: none; }
-  .login-btn { width: 100%; padding: 14px; border-radius: 12px; background: var(--primary); color: white; border: none; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .login-card p { margin-bottom: 24px; font-size: 14px; color: var(--text-main); opacity: 0.8; }
+  .login-input {
+    width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 12px;
+    border: 1px solid var(--border-color); background: var(--bg); color: var(--text-main);
+    font-size: 15px; outline: none; transition: border 0.2s;
+  }
+  .login-input:focus { border-color: var(--primary); }
+  .login-btn {
+    width: 100%; padding: 14px; border-radius: 12px; background: var(--primary);
+    color: white; border: none; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .error-msg { color: #E74C3C; font-size: 13px; margin-top: 10px; min-height: 20px; }
 
   #appContent { display: none; }
 
   /* Toolbar */
-  .toolbar { position: fixed; top: 0; left: 0; right: 0; background: var(--toolbar-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 12px; z-index: 100; border-bottom: 1px solid var(--border-color); }
-  select, button { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease; }
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--toolbar-bg);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; align-items: center;
+    padding: 12px; z-index: 100;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  select, button {
+    height: 38px; padding: 0 16px; border-radius: 10px;
+    border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  button:active { transform: scale(0.96); }
   button.undo-btn { background: #F59E0B; color: white; border: none; font-weight: 600; }
   button.today-btn { background: var(--primary); color: white; border: none; font-weight: 600; }
   button.dark-btn { background: #374151; color: white; border: none; font-weight: 600; }
   button.logout-btn { background: #E74C3C; color: white; border: none; font-weight: 600; }
   body.dark-mode button.dark-btn { background: #F3F4F6; color: #111827; }
 
-  /* Grid */
+  /* Grid e Cards */
   .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; margin-top: 10px; }
-  
-  /* IMPORTANT: scroll-margin-top a 140px per non coprire il mese su mobile */
-  .month-block { background: var(--default-cell-bg); width: 100%; max-width: 900px; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); scroll-margin-top: 140px; border: 1px solid var(--grid-border); }
-  
-  .month-header { padding: 16px; font-size: 18px; font-weight: 600; text-align: center; color: var(--primary); background: var(--header-bg); border-bottom: 1px solid var(--grid-border); transition: background 0.3s; }
+  .month-block {
+    background: var(--default-cell-bg);
+    width: 100%; max-width: 900px;
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); scroll-margin-top: 100px;
+    border: 1px solid var(--grid-border); 
+  }
+  .month-header {
+    padding: 16px; font-size: 18px; font-weight: 600;
+    text-align: center; color: var(--primary); background: var(--header-bg);
+    border-bottom: 1px solid var(--grid-border); transition: background 0.3s;
+  }
   .days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--primary); border-bottom: 1px solid var(--grid-border); }
-  .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; text-transform: uppercase; }
+  .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .week-row, .note-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cell { border-right: 1px solid var(--grid-border); cursor: pointer; overflow: hidden; transition: filter 0.2s; }
+
+  .cell {
+    border-right: 1px solid var(--grid-border); 
+    cursor: pointer; overflow: hidden; transition: filter 0.2s;
+  }
   .cell:hover { filter: brightness(0.95); }
   .week-row .cell:last-child, .note-row .cell:last-child { border-right: none; }
   .cell.empty { background: var(--empty-bg) !important; cursor: default; transition: background 0.3s; }
 
   /* Giorno */
-  .day-cell { height: 38px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+  .day-cell {
+    height: 38px; border-bottom: 1px solid var(--grid-border);
+    display: flex; align-items: center; justify-content: center; transition: background 0.3s;
+  }
   .day-num { font-weight: 600; font-size: 17px; } 
 
-  /* Note Cell (Task Style) */
-  .note-cell { height: 100px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
+  /* Note Formattate a Task */
+  .note-cell {
+    height: 95px; /* Aumentato spazio per ospitare i task */
+    border-bottom: 1px solid var(--grid-border);
+    font-size: 11px; font-weight: 500; 
+    text-align: left; /* Allineamento a sinistra per i bullet point */
+    padding: 6px; 
+    display: block; /* Modificato per permettere l'incolonnamento */
+    line-height: 1.4; transition: background 0.3s;
+    overflow-y: auto; /* Aggiunge lo scroll se ci sono troppi task */
+  }
+  
+  /* Stile barra di scorrimento delle note */
   .note-cell::-webkit-scrollbar { width: 4px; }
   .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
   body.dark-mode .note-cell::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
-  
-  /* Ring OGGI Ingrandito */
+
+  /* Ring Giorno Odierno INGRANDITO */
   .today-ring { position: relative; }
-  .today-ring::after { content: ''; position: absolute; inset: -2px; border: 4px solid var(--primary); border-radius: 6px; pointer-events: none; z-index: 10; }
+  .today-ring::after {
+    content: ''; position: absolute; 
+    inset: -1px; /* Estende il ring fuori dai bordi */
+    border: 3px solid var(--primary); /* Più spesso */
+    border-radius: 4px; pointer-events: none; z-index: 10;
+  }
   
   .cell.selected { position: relative; }
-  .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
+  .cell.selected::after {
+    content: ''; position: absolute; inset: 0;
+    background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary);
+    pointer-events: none; z-index: 5;
+  }
 
   /* Modal */
-  .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; z-index: 200;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease;
+  }
   .modal-bg.active { opacity: 1; visibility: visible; }
-  .modal { background: var(--modal-bg); border-radius: 24px; padding: 24px; width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border-color); }
+  
+  .modal {
+    background: var(--modal-bg); border-radius: 24px; padding: 24px;
+    width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid var(--border-color);
+  }
   .modal-bg.active .modal { transform: translateY(0); }
 
-  textarea { width: 100%; height: 120px; margin: 15px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); resize: none; font-size: 14px; font-weight: 500; background: var(--bg); color: var(--text-main); outline: none; }
+  textarea {
+    width: 100%; height: 90px; margin: 15px 0; padding: 12px;
+    border-radius: 12px; border: 1px solid var(--border-color); resize: none;
+    font-size: 15px; font-weight: 500; transition: border-color 0.2s;
+    background: var(--bg); color: var(--text-main);
+  }
+  textarea:focus { border-color: var(--primary); outline: none; background: var(--card-bg); }
 
   .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-  .color-opt { height: 42px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); transition: transform 0.1s; }
+  .color-opt {
+    height: 42px; border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border-color); transition: transform 0.1s;
+  }
   .color-opt:active { transform: scale(0.92); }
-  .btn-save { width: 100%; background: #10B981; color: white; padding: 14px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn-save {
+    width: 100%; background: var(--primary); color: white;
+    padding: 14px; border-radius: 12px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px;
+  }
 
-  @media (max-width: 600px) { body { padding: 0.5rem; padding-top: 110px; } .note-cell { height: 90px; } }
+  @media (max-width: 600px) {
+    body { padding: 0.5rem; padding-top: 110px; }
+    .day-num { font-size: 15px; }
+    .note-cell { font-size: 10px; height: 85px; } /* Proporzionato al mobile */
+  }
 </style>
 </head>
 <body>
@@ -134,10 +231,11 @@
 <div id="loginScreen">
   <div class="login-card">
     <h2>Smart Calendar</h2>
-    <input type="email" id="emailInput" class="login-input" placeholder="Email">
+    <p>Area riservata. Effettua l'accesso.</p>
+    <input type="email" id="emailInput" class="login-input" placeholder="La tua Email">
     <input type="password" id="passwordInput" class="login-input" placeholder="Password">
     <button class="login-btn" onclick="login()">Entra</button>
-    <div id="loginError" style="color:#E74C3C; margin-top:10px; font-size:12px;"></div>
+    <div id="loginError" class="error-msg"></div>
   </div>
 </div>
 
@@ -146,23 +244,33 @@
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
     <button class="dark-btn" onclick="toggleDarkMode()">🌓 Tema</button>
+    <button onclick="location.reload()">🔄 Aggiorna</button>
     <button id="undoBtn" class="undo-btn" onclick="undo()">↩ Annulla</button>
     <button class="logout-btn" onclick="logout()">Esci</button>
+    <span id="syncStatus" style="font-size:11px; font-weight:600; color:var(--primary); margin-left:5px;">☁️ Connesso</span>
   </div>
+
   <div class="cal-grid" id="calGrid"></div>
 
   <div class="modal-bg" id="modal" onclick="if(event.target.id==='modal')cancelModal()">
     <div class="modal">
-      <h4 id="modalTitle" style="text-align:center; margin-bottom:10px;">Modifica</h4>
+      <h4 id="modalTitle" style="font-size:16px; font-weight:600; margin-bottom:12px; text-align:center;">Modifica Giorno</h4>
       <div class="color-grid" id="colorGrid"></div>
-      <textarea id="modalText" placeholder="Scrivi qui i tuoi task..."></textarea>
+      <textarea id="modalText" placeholder="Aggiungi dei task..."></textarea>
       <button class="btn-save" onclick="saveAndCloseModal()">FATTO</button>
     </div>
   </div>
 </div>
 
 <script>
-// Firebase Config
+// Gestione Dark Mode
+if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); }
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+}
+
+// Configurazione Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDeFEGyaHbvTB5GmQwvZ3LCRHEXliWPlE8",
   authDomain: "calendariosmart-4ae27.firebaseapp.com",
@@ -176,25 +284,28 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
-let dbRef = null, db = {}, historyStack = [], initialLoad = true, currentYear = new Date().getFullYear();
-let selectedKeys = [], tempBulkColor = null, tempBulkText = "";
 
-// Tema Scuro
-if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); }
-function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', document.body.classList.contains('dark-mode')); }
+let dbRef = null;
+let initialLoad = true;
 
-// Auth
+// Gestione Autenticazione
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
+    
     if(!dbRef) {
-      dbRef = database.ref('calendario_dati');
-      dbRef.on('value', (s) => {
-        db = s.val() || {};
-        render();
-        if (initialLoad) { setTimeout(scrollToToday, 300); initialLoad = false; setupPointerEvents(); }
-      });
+        dbRef = database.ref('calendario_dati');
+        dbRef.on('value', (s) => {
+          db = s.val() || {};
+          render();
+          
+          if (initialLoad) {
+             scrollToToday();
+             initialLoad = false;
+             setupPointerEvents();
+          }
+        });
     }
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
@@ -202,25 +313,180 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-function login() { auth.signInWithEmailAndPassword(document.getElementById('emailInput').value, document.getElementById('passwordInput').value).catch(e => document.getElementById('loginError').textContent = "Credenziali errate"); }
-function logout() { auth.signOut(); initialLoad = true; }
+function login() {
+  const email = document.getElementById('emailInput').value;
+  const pass = document.getElementById('passwordInput').value;
+  const errorDiv = document.getElementById('loginError');
+  errorDiv.textContent = 'Accesso in corso...';
+  
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => { errorDiv.textContent = ''; })
+    .catch(error => {
+      console.error(error);
+      errorDiv.textContent = 'Email o password errati.';
+    });
+}
 
-// Colori
+function logout() {
+  auth.signOut();
+  initialLoad = true;
+}
+
+// Menu e Colori
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
-  {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: 'Mattina', isAdd: false},
-  {id:'pomeriggio', label:'Pom.', hex:'#F5CBA7', autoText: 'Pomeriggio', isAdd: false}, 
-  {id:'smart', label:'Smart', hex:'#E74C3C', autoText: 'Smart', isAdd: false},
-  {id:'ferie', label:'Ferie', hex:'#566573', autoText: 'Ferie', isAdd: false},
-  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: true},
-  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: true},
-  {id:'corso', label:'Corso', hex:'#3498DB', autoText: 'Corso', isAdd: true},
-  {id:'allatto', label:'Allatto', hex:'#9B59B6', autoText: '🟣 Allatto', isAdd: true},
+  {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: '', isAdd: false},
+  {id:'pomeriggio', label:'Pom.', hex:'#F5CBA7', autoText: '', isAdd: false}, 
+  {id:'smart', label:'Smart', hex:'#E74C3C', autoText: '', isAdd: false},
+  {id:'ferie', label:'Ferie', hex:'#566573', autoText: '', isAdd: false},
+  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: false},
+  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: false},
+  {id:'corso', label:'Corso', hex:'#3498DB', autoText: 'Corso', isAdd: false},
+  {id:'allatto', label:'Allatto', hex:'#9B59B6', autoText: '🟣', isAdd: true},
   {id:'festivita', label:'Festività', hex:'#A7F3D0', autoText: '', isAdd: false}
 ];
-const darkBgColors = ['#E74C3C', '#566573', '#3498DB', '#9B59B6'];
 
-// Rendering
+const darkBgColors = ['#E74C3C', '#566573', '#3498DB', '#9B59B6'];
+const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0']; 
+
+const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
+const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+
+let db = {}; 
+let historyStack = []; 
+let currentYear = new Date().getFullYear();
+let selectedKeys = [];
+let isSelecting = false;
+let tempBulkColor = null;
+let tempBulkText = "";
+
+function saveState() {
+  historyStack.push(JSON.stringify(db));
+  if(historyStack.length > 30) historyStack.shift();
+}
+
+function pushToCloud() { if(auth.currentUser) dbRef.set(db); }
+
+function undo() {
+  if(historyStack.length > 0) {
+    db = JSON.parse(historyStack.pop());
+    pushToCloud();
+    render(); 
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+});
+
+function setupPointerEvents() {
+    const grid = document.getElementById('calGrid');
+    const getCell = (x, y) => document.elementFromPoint(x, y)?.closest('.cell:not(.empty)');
+
+    grid.onpointerdown = (e) => {
+        const cell = getCell(e.clientX, e.clientY);
+        if (!cell) return;
+        isSelecting = true;
+        selectedKeys = [cell.dataset.key];
+        grid.setPointerCapture(e.pointerId);
+        cell.classList.add('selected');
+    };
+
+    grid.onpointermove = (e) => {
+        if (!isSelecting) return;
+        const cell = getCell(e.clientX, e.clientY);
+        if (cell && !selectedKeys.includes(cell.dataset.key)) {
+            selectedKeys.push(cell.dataset.key);
+            cell.classList.add('selected');
+        }
+    };
+
+    grid.onpointerup = (e) => {
+        if (!isSelecting) return;
+        isSelecting = false;
+        grid.releasePointerCapture(e.pointerId);
+        openBulkEdit();
+    };
+}
+
+function openBulkEdit() {
+  if(selectedKeys.length === 1) {
+      const data = db[selectedKeys[0]] || {};
+      tempBulkColor = data.color || 'none';
+      tempBulkText = data.text || "";
+  } else {
+      tempBulkColor = null;
+      tempBulkText = "";
+  }
+  document.getElementById('modalText').value = tempBulkText;
+  renderColors();
+  document.getElementById('modal').classList.add('active');
+}
+
+function renderColors() {
+  document.getElementById('colorGrid').innerHTML = COLORS.map(c => {
+    let bgStyle = c.hex === 'none' ? 'var(--card-bg)' : c.hex;
+    let textCol;
+    if (c.hex === 'none') textCol = 'var(--text-main)';
+    else if (darkBgColors.includes(c.hex)) textCol = '#ffffff';
+    else textCol = '#111827'; 
+
+    const textShadow = darkBgColors.includes(c.hex) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+    const border = tempBulkColor===c.id ? '2px solid var(--primary)' : '1px solid var(--border-color)';
+    
+    return `<div class="color-opt" style="background:${bgStyle}; border:${border}; color:${textCol}; ${textShadow}" onclick="selectBulkColor('${c.id}', event)">${c.label}</div>`;
+  }).join('');
+}
+
+function selectBulkColor(id, event) {
+  event.stopPropagation();
+  const colorObj = COLORS.find(c => c.id === id);
+  if (!colorObj.isAdd) tempBulkColor = id;
+  
+  if (id === 'none') {
+      tempBulkText = '';
+      document.getElementById('modalText').value = '';
+  } else if (colorObj.autoText) {
+      // Inserisce il testo mandando a capo come fosse un nuovo Task
+      tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
+      document.getElementById('modalText').value = tempBulkText;
+  }
+  
+  renderColors();
+}
+
+function saveAndCloseModal() {
+  const currentTxt = document.getElementById('modalText').value.trim();
+  tempBulkText = currentTxt;
+  saveState(); 
+  
+  selectedKeys.forEach(k => {
+    db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
+    if(db[k].color === 'none' && db[k].text === '') delete db[k];
+  });
+  
+  pushToCloud();
+  
+  document.getElementById('modal').classList.remove('active');
+  document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedKeys = [];
+}
+
+function cancelModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedKeys = [];
+}
+
+const REF_DATE = new Date(2027, 0, 4);
+function getAutoColor(y, m, d) {
+  const dt = new Date(y, m-1, d);
+  const dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
+  const mon = new Date(dt); mon.setDate(dt.getDate() - dow);
+  const wk = Math.round((mon - REF_DATE) / (1000*60*60*24*7));
+  return wk % 2 === 0 ? '#D6EAF8' : '#F5CBA7'; 
+}
+
 function render() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
@@ -230,89 +496,105 @@ function render() {
   for(let m=1; m<=12; m++) {
     const daysInM = new Date(currentYear, m, 0).getDate();
     const offset = new Date(currentYear, m-1, 1).getDay() === 0 ? 6 : new Date(currentYear, m-1, 1).getDay() - 1;
-    let h = `<div class="month-block" id="m-${currentYear}-${m}"><div class="month-header">${['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'][m-1]} ${currentYear}</div><div class="days-header">${['LUN','MAR','MER','GIO','VEN','SAB','DOM'].map(d => `<div class="day-name">${d}</div>`).join('')}</div>`;
+
+    let h = `<div class="month-block" id="m-${currentYear}-${m}">
+      <div class="month-header">${MONTHS[m-1]} ${currentYear}</div>
+      <div class="days-header">${DAYS.map(d => `<div class="day-name">${d}</div>`).join('')}</div>`;
+
     let d = 1 - offset;
     while(d <= daysInM) {
       h += `<div class="week-row">`;
+      // RIGA NUMERI
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
-          const k = `${currentYear}-${m}-${cd}-top`, isT = currentYear===ty && (m-1)===tm && cd===td, user = db[k] || {};
-          let bg = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : (new Date(currentYear, m-1, cd).getDay()%6===0 && new Date(currentYear, m-1, cd).getDay()!==0 || new Date(currentYear, m-1, cd).getDay()===0 ? 'var(--weekend-bg)' : (Math.round((new Date(currentYear, m-1, cd) - new Date(2027,0,4))/(7*24*3600000))%2===0 ? '#D6EAF8' : '#F5CBA7'));
-          h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bg}" data-key="${k}"><span class="day-num">${cd}</span></div>`;
+          const k = `${currentYear}-${m}-${cd}-top`;
+          const isT = currentYear===ty && (m-1)===tm && cd===td;
+          const user = db[k] || {};
+          let hexCol = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
+          
+          let bgStyle = hexCol;
+          let isWeekend = false;
+
+          if(bgStyle === 'none') {
+            const dow = new Date(currentYear, m-1, cd).getDay();
+            if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
+            else { bgStyle = getAutoColor(currentYear, m, cd); }
+          }
+
+          let textCol;
+          if (darkBgColors.includes(bgStyle)) textCol = '#ffffff';
+          else if (lightBgColors.includes(bgStyle)) textCol = '#111827';
+          else if (isWeekend) textCol = 'var(--weekend-text)';
+          else textCol = 'var(--default-text)';
+
+          const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+
+          h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">
+            <span class="day-num">${cd}</span></div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div><div class="note-row">`;
+      // RIGA APPUNTI / TASK
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
-          const k = `${currentYear}-${m}-${cd}-bottom`, user = db[k] || {};
-          let bg = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : (new Date(currentYear, m-1, cd).getDay()%6===0 && new Date(currentYear, m-1, cd).getDay()!==0 || new Date(currentYear, m-1, cd).getDay()===0 ? 'var(--weekend-bg)' : 'var(--default-cell-bg)');
-          const tasks = (user.text||'').split('\n').filter(l=>l.trim()).map(l=>`<div style="display:flex;gap:4px"><span>•</span><span>${l}</span></div>`).join('');
-          h += `<div class="cell note-cell" style="background:${bg}; color:${darkBgColors.includes(bg)?'#fff':'var(--text-main)'}" data-key="${k}">${tasks}</div>`;
+          const k = `${currentYear}-${m}-${cd}-bottom`;
+          const user = db[k] || {};
+          let hexCol = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
+          
+          let bgStyle = hexCol;
+          let isWeekend = false;
+
+          if (bgStyle === 'none') {
+            const dow = new Date(currentYear, m-1, cd).getDay();
+            if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
+            else { bgStyle = 'var(--default-cell-bg)'; }
+          }
+
+          let textCol;
+          if (darkBgColors.includes(bgStyle)) textCol = '#ffffff';
+          else if (lightBgColors.includes(bgStyle)) textCol = '#111827';
+          else if (isWeekend) textCol = 'var(--weekend-text)';
+          else textCol = 'var(--default-text)';
+
+          const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+
+          // Parsing per formattare come Task List
+          const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
+          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+
+          h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
-      h += `</div>`; d += 7;
+      h += `</div>`;
+      d += 7;
     }
     grid.innerHTML += h + `</div>`;
   }
 }
 
-// Interazioni
-function setupPointerEvents() {
-  const grid = document.getElementById('calGrid');
-  grid.onpointerdown = (e) => { const cell = e.target.closest('.cell:not(.empty)'); if (!cell) return; isSelecting = true; selectedKeys = [cell.dataset.key]; cell.classList.add('selected'); grid.setPointerCapture(e.pointerId); };
-  grid.onpointermove = (e) => { if (!isSelecting) return; const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell:not(.empty)'); if (cell && !selectedKeys.includes(cell.dataset.key)) { selectedKeys.push(cell.dataset.key); cell.classList.add('selected'); } };
-  grid.onpointerup = (e) => { if (isSelecting) { isSelecting = false; grid.releasePointerCapture(e.pointerId); openBulkEdit(); } };
-}
-
-function openBulkEdit() {
-  const data = (selectedKeys.length === 1) ? (db[selectedKeys[0]] || {}) : {};
-  tempBulkColor = data.color || 'none'; tempBulkText = data.text || "";
-  document.getElementById('modalText').value = tempBulkText;
-  renderColors(); document.getElementById('modal').classList.add('active');
-}
-
-function renderColors() {
-  document.getElementById('colorGrid').innerHTML = COLORS.map(c => {
-    let textCol = c.hex === 'none' ? 'var(--text-main)' : (darkBgColors.includes(c.hex) ? '#ffffff' : '#111827');
-    return `<div class="color-opt" style="background:${c.hex==='none'?'var(--card-bg)':c.hex}; border:${tempBulkColor===c.id?'2px solid var(--primary)':'1px solid var(--border-color)'}; color:${textCol}" onclick="selectBulkColor('${c.id}')">${c.label}</div>`;
-  }).join('');
-}
-
-function selectBulkColor(id) {
-  const colorObj = COLORS.find(c => c.id === id);
-  if (!colorObj.isAdd) tempBulkColor = id;
-  if (id === 'none') { tempBulkText = ''; }
-  else if (colorObj.autoText) {
-    if (tempBulkText && !tempBulkText.endsWith('\n')) tempBulkText += '\n';
-    tempBulkText += colorObj.autoText + '\n';
-  }
-  document.getElementById('modalText').value = tempBulkText; renderColors(); document.getElementById('modalText').focus();
-}
-
-function saveAndCloseModal() {
-  historyStack.push(JSON.stringify(db));
-  selectedKeys.forEach(k => {
-    db[k] = { color: tempBulkColor, text: document.getElementById('modalText').value.trim() };
-    if(!db[k].text && db[k].color === 'none') delete db[k];
-  });
-  dbRef.set(db);
-  document.getElementById('modal').classList.remove('active'); document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
-}
-
-function cancelModal() { document.getElementById('modal').classList.remove('active'); document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected')); }
-
-function scrollToToday() {
-  const target = document.getElementById(`m-${currentYear}-${new Date().getMonth()+1}`);
-  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-function undo() { if(historyStack.length) { db = JSON.parse(historyStack.pop()); dbRef.set(db); render(); } }
-
 const s = document.getElementById('yearSel');
 for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
-s.value = currentYear; s.onchange = () => { currentYear = +s.value; render(); };
+s.value = currentYear;
+s.onchange = () => { currentYear = +s.value; render(); };
+
+function scrollToToday() {
+  const t = new Date();
+  currentYear = t.getFullYear(); s.value = currentYear; render();
+  setTimeout(() => { 
+    const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
+    if(target) {
+        // Offset aggiunto per tenere conto della toolbar fissa
+        const offset = 80; 
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = target.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
+  }, 250);
+}
 </script>
 </body>
 </html>
