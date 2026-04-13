@@ -19,17 +19,19 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
+  /* Variabili per Tema Chiaro e Scuro */
   :root {
-    --primary: #7C3AED; 
+    --primary: #7C3AED; /* Viola Moderno */
     --bg: #F3F4F6; 
     --card-bg: #ffffff;
     --text-main: #374151; 
     --border-color: #D1D5DB; 
-    --grid-border: #6B7280; 
+    --grid-border: #6B7280; /* Bordo griglia grigio scuro */
     --modal-bg: #ffffff;
     --toolbar-bg: rgba(255, 255, 255, 0.85);
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     --radius: 20px;
+    
     --header-bg: #ffffff;
     --empty-bg: #F3F4F6;
     --weekend-bg: #F9FAFB;
@@ -39,7 +41,7 @@
   }
 
   body.dark-mode {
-    --primary: #8B5CF6; 
+    --primary: #8B5CF6; /* Viola luminoso su scuro */
     --bg: #111827;
     --card-bg: #1F2937;
     --text-main: #E5E7EB;
@@ -48,6 +50,7 @@
     --modal-bg: #1F2937;
     --toolbar-bg: rgba(31, 41, 55, 0.85);
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+
     --header-bg: #000000; 
     --empty-bg: #000000; 
     --weekend-bg: #000000; 
@@ -84,20 +87,24 @@
   }
   .error-msg { color: #E74C3C; font-size: 13px; margin-top: 10px; min-height: 20px; }
 
-  /* Il resto dell'app è nascosto di default */
   #appContent { display: none; }
 
+  /* Toolbar */
   .toolbar {
-    position: fixed; top: 0; left: 0; right: 0; background: var(--toolbar-bg);
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--toolbar-bg);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
-    padding: 12px; z-index: 100; border-bottom: 1px solid var(--border-color);
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; align-items: center;
+    padding: 12px; z-index: 100;
+    border-bottom: 1px solid var(--border-color);
   }
 
   select, button {
     height: 38px; padding: 0 16px; border-radius: 10px;
     border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
-    cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   }
   button:active { transform: scale(0.96); }
   button.undo-btn { background: #F59E0B; color: white; border: none; font-weight: 600; }
@@ -106,62 +113,117 @@
   button.logout-btn { background: #E74C3C; color: white; border: none; font-weight: 600; }
   body.dark-mode button.dark-btn { background: #F3F4F6; color: #111827; }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 2rem; }
-  .leg-item {
-    background: var(--card-bg); padding: 6px 12px; border-radius: 20px; font-size: 11px;
-    font-weight: 500; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color);
-  }
-
-  .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; }
+  /* Grid e Cards */
+  .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; margin-top: 10px; }
   .month-block {
-    background: var(--default-cell-bg); width: 100%; max-width: 900px;
-    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
-    scroll-margin-top: 100px; border: 1px solid var(--grid-border); 
+    background: var(--default-cell-bg);
+    width: 100%; max-width: 900px;
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); scroll-margin-top: 100px;
+    border: 1px solid var(--grid-border); 
   }
   .month-header {
-    padding: 16px; font-size: 18px; font-weight: 600; text-align: center;
-    color: var(--primary); background: var(--header-bg); border-bottom: 1px solid var(--grid-border);
+    padding: 16px; font-size: 18px; font-weight: 600;
+    text-align: center; color: var(--primary); background: var(--header-bg);
+    border-bottom: 1px solid var(--grid-border); transition: background 0.3s;
   }
   .days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--primary); border-bottom: 1px solid var(--grid-border); }
-  .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; }
+  .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .week-row, .note-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cell { border-right: 1px solid var(--grid-border); cursor: pointer; overflow: hidden; }
-  .cell:last-child { border-right: none; }
-  .cell.empty { background: var(--empty-bg) !important; cursor: default; }
 
-  .day-cell { height: 38px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; }
+  .cell {
+    border-right: 1px solid var(--grid-border); 
+    cursor: pointer; overflow: hidden; transition: filter 0.2s;
+  }
+  .cell:hover { filter: brightness(0.95); }
+  .week-row .cell:last-child, .note-row .cell:last-child { border-right: none; }
+  .cell.empty { background: var(--empty-bg) !important; cursor: default; transition: background 0.3s; }
+
+  /* Giorno */
+  .day-cell {
+    height: 38px; border-bottom: 1px solid var(--grid-border);
+    display: flex; align-items: center; justify-content: center; transition: background 0.3s;
+  }
   .day-num { font-weight: 600; font-size: 17px; } 
 
+  /* Note Formattate a Task */
   .note-cell {
-    height: 75px; border-bottom: 1px solid var(--grid-border); font-size: 12px; font-weight: 500;
-    text-align: center; padding: 4px; display: flex; align-items: center; justify-content: center; line-height: 1.3;
+    height: 95px; /* Aumentato spazio per ospitare i task */
+    border-bottom: 1px solid var(--grid-border);
+    font-size: 11px; font-weight: 500; 
+    text-align: left; /* Allineamento a sinistra per i bullet point */
+    padding: 6px; 
+    display: block; /* Modificato per permettere l'incolonnamento */
+    line-height: 1.4; transition: background 0.3s;
+    overflow-y: auto; /* Aggiunge lo scroll se ci sono troppi task */
+  }
+  
+  /* Stile barra di scorrimento delle note */
+  .note-cell::-webkit-scrollbar { width: 4px; }
+  .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+  body.dark-mode .note-cell::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
+
+  /* Ring Giorno Odierno INGRANDITO */
+  .today-ring { position: relative; }
+  .today-ring::after {
+    content: ''; position: absolute; 
+    inset: -1px; /* Estende il ring fuori dai bordi */
+    border: 3px solid var(--primary); /* Più spesso */
+    border-radius: 4px; pointer-events: none; z-index: 10;
+  }
+  
+  .cell.selected { position: relative; }
+  .cell.selected::after {
+    content: ''; position: absolute; inset: 0;
+    background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary);
+    pointer-events: none; z-index: 5;
   }
 
-  .today-ring { position: relative; }
-  .today-ring::after { content: ''; position: absolute; inset: 2px; border: 2px solid var(--primary); border-radius: 6px; pointer-events: none; }
-  .cell.selected { position: relative; }
-  .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
-
+  /* Modal */
   .modal-bg {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; z-index: 200;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease;
   }
   .modal-bg.active { opacity: 1; visibility: visible; }
+  
   .modal {
-    background: var(--modal-bg); border-radius: 24px; padding: 24px; width: 350px; max-width: 90vw;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border-color);
+    background: var(--modal-bg); border-radius: 24px; padding: 24px;
+    width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid var(--border-color);
   }
   .modal-bg.active .modal { transform: translateY(0); }
 
-  textarea { width: 100%; height: 90px; margin: 15px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); resize: none; font-size: 15px; font-weight: 500; background: var(--bg); color: var(--text-main); }
+  textarea {
+    width: 100%; height: 90px; margin: 15px 0; padding: 12px;
+    border-radius: 12px; border: 1px solid var(--border-color); resize: none;
+    font-size: 15px; font-weight: 500; transition: border-color 0.2s;
+    background: var(--bg); color: var(--text-main);
+  }
   textarea:focus { border-color: var(--primary); outline: none; background: var(--card-bg); }
 
   .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-  .color-opt { height: 42px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); }
-  .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
+  .color-opt {
+    height: 42px; border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border-color); transition: transform 0.1s;
+  }
+  .color-opt:active { transform: scale(0.92); }
+  .btn-save {
+    width: 100%; background: var(--primary); color: white;
+    padding: 14px; border-radius: 12px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px;
+  }
 
-  @media (max-width: 600px) { body { padding: 0.5rem; padding-top: 110px; } .day-num { font-size: 15px; } .note-cell { font-size: 11px; height: 65px; } }
+  @media (max-width: 600px) {
+    body { padding: 0.5rem; padding-top: 110px; }
+    .day-num { font-size: 15px; }
+    .note-cell { font-size: 10px; height: 85px; } /* Proporzionato al mobile */
+  }
 </style>
 </head>
 <body>
@@ -182,33 +244,33 @@
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
     <button class="dark-btn" onclick="toggleDarkMode()">🌓 Tema</button>
+    <button onclick="location.reload()">🔄 Aggiorna</button>
     <button id="undoBtn" class="undo-btn" onclick="undo()">↩ Annulla</button>
     <button class="logout-btn" onclick="logout()">Esci</button>
     <span id="syncStatus" style="font-size:11px; font-weight:600; color:var(--primary); margin-left:5px;">☁️ Connesso</span>
   </div>
 
-  <div id="legend" class="legend"></div>
   <div class="cal-grid" id="calGrid"></div>
 
-  <div class="modal-bg" id="modal" onclick="if(event.target.id==='modal')closeModal()">
+  <div class="modal-bg" id="modal" onclick="if(event.target.id==='modal')cancelModal()">
     <div class="modal">
       <h4 id="modalTitle" style="font-size:16px; font-weight:600; margin-bottom:12px; text-align:center;">Modifica Giorno</h4>
       <div class="color-grid" id="colorGrid"></div>
-      <textarea id="modalText" placeholder="Aggiungi una nota..."></textarea>
-      <button class="btn-save" onclick="closeModal()">FATTO</button>
+      <textarea id="modalText" placeholder="Aggiungi dei task..."></textarea>
+      <button class="btn-save" onclick="saveAndCloseModal()">FATTO</button>
     </div>
   </div>
 </div>
 
 <script>
-// --- TEMA SCURO ---
+// Gestione Dark Mode
 if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); }
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
 
-// --- CONFIGURAZIONE FIREBASE ---
+// Configurazione Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDeFEGyaHbvTB5GmQwvZ3LCRHEXliWPlE8",
   authDomain: "calendariosmart-4ae27.firebaseapp.com",
@@ -224,24 +286,28 @@ const auth = firebase.auth();
 const database = firebase.database();
 
 let dbRef = null;
+let initialLoad = true;
 
-// --- GESTIONE AUTENTICAZIONE ---
+// Gestione Autenticazione
 auth.onAuthStateChanged(user => {
   if (user) {
-    // Utente Loggato: Mostra app, nascondi login
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
     
-    // Carica Dati
     if(!dbRef) {
         dbRef = database.ref('calendario_dati');
         dbRef.on('value', (s) => {
           db = s.val() || {};
           render();
+          
+          if (initialLoad) {
+             scrollToToday();
+             initialLoad = false;
+             setupPointerEvents();
+          }
         });
     }
   } else {
-    // Non Loggato: Mostra login, nascondi app
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appContent').style.display = 'none';
   }
@@ -263,17 +329,18 @@ function login() {
 
 function logout() {
   auth.signOut();
+  initialLoad = true;
 }
 
-// --- LOGICA CALENDARIO ---
+// Menu e Colori
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: '', isAdd: false},
   {id:'pomeriggio', label:'Pom.', hex:'#F5CBA7', autoText: '', isAdd: false}, 
   {id:'smart', label:'Smart', hex:'#E74C3C', autoText: '', isAdd: false},
   {id:'ferie', label:'Ferie', hex:'#566573', autoText: '', isAdd: false},
-  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: 'Treno 8.52', isAdd: false},
-  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: 'Treno 15.05', isAdd: false},
+  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: false},
+  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: false},
   {id:'corso', label:'Corso', hex:'#3498DB', autoText: 'Corso', isAdd: false},
   {id:'allatto', label:'Allatto', hex:'#9B59B6', autoText: '🟣', isAdd: true},
   {id:'festivita', label:'Festività', hex:'#A7F3D0', autoText: '', isAdd: false}
@@ -373,7 +440,6 @@ function renderColors() {
 
 function selectBulkColor(id, event) {
   event.stopPropagation();
-  saveState(); 
   const colorObj = COLORS.find(c => c.id === id);
   if (!colorObj.isAdd) tempBulkColor = id;
   
@@ -381,9 +447,18 @@ function selectBulkColor(id, event) {
       tempBulkText = '';
       document.getElementById('modalText').value = '';
   } else if (colorObj.autoText) {
-      tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + " " + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
+      // Inserisce il testo mandando a capo come fosse un nuovo Task
+      tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
       document.getElementById('modalText').value = tempBulkText;
   }
+  
+  renderColors();
+}
+
+function saveAndCloseModal() {
+  const currentTxt = document.getElementById('modalText').value.trim();
+  tempBulkText = currentTxt;
+  saveState(); 
   
   selectedKeys.forEach(k => {
     db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
@@ -391,25 +466,16 @@ function selectBulkColor(id, event) {
   });
   
   pushToCloud();
-  renderColors();
   
-  if (!colorObj.isAdd) closeModal();
-}
-
-function closeModal() {
-  const currentTxt = document.getElementById('modalText').value.trim();
-  if (currentTxt !== tempBulkText && selectedKeys.length > 0) {
-     saveState();
-     selectedKeys.forEach(k => {
-       db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: currentTxt };
-       if(db[k].color === 'none' && db[k].text === '') delete db[k];
-     });
-     pushToCloud();
-  }
   document.getElementById('modal').classList.remove('active');
   document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
   selectedKeys = [];
-  render();
+}
+
+function cancelModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedKeys = [];
 }
 
 const REF_DATE = new Date(2027, 0, 4);
@@ -438,6 +504,7 @@ function render() {
     let d = 1 - offset;
     while(d <= daysInM) {
       h += `<div class="week-row">`;
+      // RIGA NUMERI
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
@@ -451,12 +518,8 @@ function render() {
 
           if(bgStyle === 'none') {
             const dow = new Date(currentYear, m-1, cd).getDay();
-            if (dow===0 || dow===6) {
-                bgStyle = 'var(--weekend-bg)';
-                isWeekend = true;
-            } else {
-                bgStyle = getAutoColor(currentYear, m, cd);
-            }
+            if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
+            else { bgStyle = getAutoColor(currentYear, m, cd); }
           }
 
           let textCol;
@@ -472,6 +535,7 @@ function render() {
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div><div class="note-row">`;
+      // RIGA APPUNTI / TASK
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
@@ -484,12 +548,8 @@ function render() {
 
           if (bgStyle === 'none') {
             const dow = new Date(currentYear, m-1, cd).getDay();
-            if (dow===0 || dow===6) {
-                bgStyle = 'var(--weekend-bg)';
-                isWeekend = true;
-            } else {
-                bgStyle = 'var(--default-cell-bg)';
-            }
+            if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
+            else { bgStyle = 'var(--default-cell-bg)'; }
           }
 
           let textCol;
@@ -500,7 +560,11 @@ function render() {
 
           const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
 
-          h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${(user.text||'').replace(/\n/g,'<br>')}</div>`;
+          // Parsing per formattare come Task List
+          const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
+          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+
+          h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div>`;
@@ -515,20 +579,22 @@ for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
-document.getElementById('legend').innerHTML = COLORS.filter(c=>c.id!=='none').map(c=>`
-  <div class="leg-item"><div style="width:12px;height:12px;border-radius:3px;background:${c.hex==='none'?'#ffffff':c.hex};box-shadow:inset 0 0 0 1px var(--border-color)"></div>${c.label}</div>
-`).join('');
-
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
   setTimeout(() => { 
     const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
-    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    if(target) {
+        // Offset aggiunto per tenere conto della toolbar fissa
+        const offset = 80; 
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = target.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+    }
   }, 250);
 }
-
-window.onload = () => { scrollToToday(); setupPointerEvents(); };
 </script>
 </body>
 </html>
