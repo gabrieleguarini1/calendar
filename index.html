@@ -411,19 +411,43 @@ function saveAndCloseModal() {
   tempBulkText = currentTxt;
   saveState(); 
   
+  let daysModified = [];
+
   selectedKeys.forEach(k => {
     db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
     if(db[k].color === 'none' && db[k].text === '') delete db[k];
+    
+    // Estrai la data per la notifica push
+    const parts = k.split('-');
+    const dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    if (!daysModified.includes(dateStr)) daysModified.push(dateStr);
   });
   
   pushToCloud();
   
-  document.getElementById('modal').classList.remove('active');
-  document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
-  selectedKeys = [];
-}
+  // --- INIZIO INTEGRAZIONE NTFY ---
+  if (auth.currentUser && (tempBulkText !== '' || tempBulkColor !== 'none' || tempBulkColor === 'none')) {
+      // Determina il nome di chi sta facendo l'azione in base alla mail loggata
+      const userEmail = auth.currentUser.email.toLowerCase();
+      const author = userEmail.includes('gabri') ? 'Gabri 👱‍♂️' : 'Meri 👩🏻'; 
+      
+      const daysText = daysModified.join(', ');
+      let notifText = `${author} ha modificato il giorno ${daysText}.`;
+      if (tempBulkText) {
+          notifText += `\nTask aggiunti: "${tempBulkText}"`;
+      }
 
-function cancelModal() {
+      // Invia la notifica via fetch al canale impostato
+      fetch('https://ntfy.sh/merigabri_calendariosegreto_17462819', {
+          method: 'POST',
+          body: notifText,
+          headers: {
+              'Title': 'Smart Calendar Premium 🗓️'
+          }
+      }).catch(err => console.log('Errore invio notifica:', err));
+  }
+  // --- FINE INTEGRAZIONE NTFY ---
+  
   document.getElementById('modal').classList.remove('active');
   document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
   selectedKeys = [];
