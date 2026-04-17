@@ -252,6 +252,9 @@ auth.onAuthStateChanged(user => {
           db = s.val() || {};
           render();
           
+          // Chiama in modo sicuro le notifiche ntfy senza bloccare la UI
+          setTimeout(scheduleNotifications, 1000);
+          
           if (initialLoad) {
              setTimeout(scrollToToday, 300); // Piccolo delay per permettere al DOM di renderizzarsi
              initialLoad = false;
@@ -411,43 +414,19 @@ function saveAndCloseModal() {
   tempBulkText = currentTxt;
   saveState(); 
   
-  let daysModified = [];
-
   selectedKeys.forEach(k => {
     db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
     if(db[k].color === 'none' && db[k].text === '') delete db[k];
-    
-    // Estrai la data per la notifica push
-    const parts = k.split('-');
-    const dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-    if (!daysModified.includes(dateStr)) daysModified.push(dateStr);
   });
   
   pushToCloud();
   
-  // --- INIZIO INTEGRAZIONE NTFY ---
-  if (auth.currentUser && (tempBulkText !== '' || tempBulkColor !== 'none' || tempBulkColor === 'none')) {
-      // Determina il nome di chi sta facendo l'azione in base alla mail loggata
-      const userEmail = auth.currentUser.email.toLowerCase();
-      const author = userEmail.includes('gabri') ? 'Gabri 👱‍♂️' : 'Meri 👩🏻'; 
-      
-      const daysText = daysModified.join(', ');
-      let notifText = `${author} ha modificato il giorno ${daysText}.`;
-      if (tempBulkText) {
-          notifText += `\nTask aggiunti: "${tempBulkText}"`;
-      }
+  document.getElementById('modal').classList.remove('active');
+  document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedKeys = [];
+}
 
-      // Invia la notifica via fetch al canale impostato
-      fetch('https://ntfy.sh/merigabri_calendariosegreto_17462819', {
-          method: 'POST',
-          body: notifText,
-          headers: {
-              'Title': 'Smart Calendar Premium 🗓️'
-          }
-      }).catch(err => console.log('Errore invio notifica:', err));
-  }
-  // --- FINE INTEGRAZIONE NTFY ---
-  
+function cancelModal() {
   document.getElementById('modal').classList.remove('active');
   document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
   selectedKeys = [];
@@ -537,7 +516,7 @@ function render() {
 
           // Parsing per formattare come Task List
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
-          const htmlTasks = lines.map(l => `<div style="display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
 
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
@@ -554,6 +533,91 @@ for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
+// ==========================================
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY
+// ==========================================
+function scheduleNotifications() {
+    try {
+        const topic = "calendargabriele172636181919"; 
+        const now = new Date();
+
+        // Controlla il turno di Oggi, Domani e Dopodomani (max 3 giorni in anticipo supportato da ntfy gratuito)
+        for(let i=0; i<3; i++) {
+            let d = new Date();
+            d.setDate(now.getDate() + i);
+
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            const day = d.getDate();
+            const dow = d.getDay();
+
+            // Salta Sabato(6) e Domenica(0)
+            if(dow === 0 || dow === 6) continue;
+
+            const k = `${y}-${m}-${day}-top`;
+            const user = db[k] || {};
+
+            // Trova il colore assegnato (manuale o auto)
+            let shiftColor = user.color && user.color !== 'none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
+            if (shiftColor === 'none') {
+                shiftColor = getAutoColor(y, m, day);
+            }
+
+            // Se hai messo Ferie o Festività, annulla la sveglia per quel giorno
+            if(shiftColor === '#566573' || shiftColor === '#A7F3D0') continue;
+
+            let entryH, entryM, exitH, exitM;
+
+            if (shiftColor === '#D6EAF8') { // MATTINA (Azzurro)
+                entryH = 6; entryM = 30;
+                if (dow === 5) { exitH = 14; exitM = 00; } // Venerdi
+                else { exitH = 13; exitM = 45; } // Lun-Gio
+            } 
+            else if (shiftColor === '#F5CBA7') { // POMERIGGIO (Arancione)
+                if (dow === 5) { entryH = 13; entryM = 30; exitH = 20; exitM = 30; } // Venerdi
+                else { entryH = 13; entryM = 45; exitH = 21; exitM = 0; } // Lun-Gio
+            } 
+            else {
+                continue; 
+            }
+
+            // Costruisce i Timestamp per Entrata e Uscita
+            let entryTime = new Date(y, m-1, day, entryH, entryM, 0);
+            let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
+
+            // Funzione per sparare la notifica ritardata a Ntfy
+            const sendNtfy = (timeObj, message) => {
+                const ts = Math.floor(timeObj.getTime() / 1000);
+                
+                // Se l'orario è già passato, ignora
+                if (timeObj.getTime() <= Date.now()) return;
+
+                // Uso il LocalStorage per ricordarmi che l'ho già programmata (evita spam di duplicati)
+                const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
+                if (!localStorage.getItem(storageKey)) {
+                    fetch(`https://ntfy.sh/${topic}`, {
+                        method: 'POST',
+                        body: message,
+                        headers: {
+                            'Title': 'Promemoria Turno ⏱️',
+                            'Delay': ts.toString(), // Mette la notifica in coda sul server
+                            'Tags': 'rotating_light,briefcase'
+                        }
+                    }).then(res => {
+                        if(res.ok) localStorage.setItem(storageKey, 'true');
+                    }).catch(e => console.log('Errore invio Ntfy:', e));
+                }
+            };
+
+            sendNtfy(entryTime, "Timbra entrata");
+            sendNtfy(exitTime, "Timbra uscita");
+        }
+    } catch(err) {
+        console.error("Errore sistema notifiche:", err);
+    }
+}
+
+// Funzione di scorrimento invariata
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
