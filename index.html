@@ -143,12 +143,12 @@
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
     .toolbar { padding: 6px; gap: 4px; }
     select, button { height: 32px; padding: 0 8px; font-size: 11px; }
-    #syncStatus { display: none; }
+    #syncStatus { display: none; } 
 
     .cal-grid { gap: 15px; margin-top: 5px; }
 
     .month-block {
-      height: calc(100vh - 70px); 
+      height: calc(100dvh - 70px); 
       display: flex; 
       flex-direction: column;
       scroll-margin-top: 65px; 
@@ -522,6 +522,15 @@ function render() {
 }
 
 // ==========================================
+// ⚙️ MENU ANNI - CRITICO PER LO SCROLL
+// ==========================================
+const s = document.getElementById('yearSel');
+for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
+s.value = currentYear;
+s.onchange = () => { currentYear = +s.value; render(); };
+
+
+// ==========================================
 // ⏰ LOGICA NOTIFICHE RITARDATE NTFY
 // ==========================================
 function scheduleNotifications() {
@@ -558,7 +567,7 @@ function scheduleNotifications() {
 
             if (shiftColor === '#D6EAF8') { // MATTINA (Azzurro)
                 entryH = 6; entryM = 30;
-                if (dow === 5) { exitH = 14; exitM = 26; } // Venerdi
+                if (dow === 5) { exitH = 13; exitM = 30; } // Venerdi
                 else { exitH = 13; exitM = 45; } // Lun-Gio
             } 
             else if (shiftColor === '#F5CBA7') { // POMERIGGIO (Arancione)
@@ -584,16 +593,16 @@ function scheduleNotifications() {
                 const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
                 if (!localStorage.getItem(storageKey)) {
                     
-                    // ALERT DI DEBUG - Lasciato per i tuoi test (puoi cancellarlo in futuro se ti dà fastidio)
+                    // ALERT DI DEBUG PER VERIFICARE L'INVIO
                     alert(`Sto programmando la notifica "${message}" per il giorno ${day}/${m} alle ore ${timeObj.getHours()}:${String(timeObj.getMinutes()).padStart(2, '0')}`);
 
                     fetch(`https://ntfy.sh/${topic}`, {
                         method: 'POST',
                         body: message,
                         headers: {
-                            'Title': 'Promemoria Turno', // RIMOSSA EMOJI DA QUI PER EVITARE ERRORE FETCH ISO-8859-1
-                            'Delay': ts.toString(), // Mette la notifica in coda sul server
-                            'Tags': 'rotating_light,briefcase' // LE EMOJI VERRANNO AGGIUNTE TRAMITE QUESTI TAG!
+                            'Title': 'Promemoria Turno', // Niente Emoji qui
+                            'Delay': ts.toString(), 
+                            'Tags': 'rotating_light,briefcase' // Le emoji arrivano tramite questi tags
                         }
                     }).then(res => {
                         if(res.ok) {
@@ -616,19 +625,17 @@ function scheduleNotifications() {
     }
 }
 
-// Funzione di scorrimento (Scroll to Today)
+// Funzione di scorrimento
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
   setTimeout(() => { 
     const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
     if(target) {
-        // Calcola l'altezza dinamica della toolbar
         const toolbarHeight = document.getElementById('mainToolbar').offsetHeight;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = target.getBoundingClientRect().top;
         
-        // Sottrae l'altezza della toolbar + un piccolo offset estetico (10px)
         const offsetPosition = (elementRect - bodyRect) - toolbarHeight - 10;
         
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
