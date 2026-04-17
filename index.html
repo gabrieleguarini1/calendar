@@ -207,12 +207,14 @@
 </div>
 
 <script>
+// Gestione Dark Mode
 if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); }
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
 
+// Configurazione Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDeFEGyaHbvTB5GmQwvZ3LCRHEXliWPlE8",
   authDomain: "calendariosmart-4ae27.firebaseapp.com",
@@ -230,6 +232,7 @@ const database = firebase.database();
 let dbRef = null;
 let initialLoad = true;
 
+// Gestione Autenticazione
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById('loginScreen').style.display = 'none';
@@ -241,10 +244,11 @@ auth.onAuthStateChanged(user => {
           db = s.val() || {};
           render();
           
+          // Chiama in modo sicuro le notifiche ntfy con un delay (silenziosamente)
           setTimeout(scheduleNotifications, 1000);
           
           if (initialLoad) {
-             setTimeout(scrollToToday, 300);
+             setTimeout(scrollToToday, 300); 
              initialLoad = false;
              setupPointerEvents();
           }
@@ -275,6 +279,7 @@ function logout() {
   initialLoad = true;
 }
 
+// Menu e Colori
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: '', isAdd: false},
@@ -501,8 +506,9 @@ function render() {
 
           const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
 
+          // Parsing per formattare come Task List
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
-          const htmlTasks = lines.map(l => `<div style="display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
 
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
@@ -520,8 +526,9 @@ for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
+
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (SILENZIOSA)
 // ==========================================
 function scheduleNotifications() {
     try {
@@ -539,10 +546,22 @@ function scheduleNotifications() {
 
             if(dow === 0 || dow === 6) continue;
 
-            const k = `${y}-${m}-${day}-top`;
-            const user = db[k] || {};
+            // RECUPERO CELLE TOP E BOTTOM
+            const kTop = `${y}-${m}-${day}-top`;
+            const kBottom = `${y}-${m}-${day}-bottom`;
+            const userTop = db[kTop] || {};
+            const userBottom = db[kBottom] || {};
 
-            let shiftColor = user.color && user.color !== 'none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
+            // CONTROLLO CELLA BOTTOM (Smart o Corso)
+            let bottomColor = userBottom.color && userBottom.color !== 'none' ? COLORS.find(c=>c.id===userBottom.color).hex : 'none';
+            
+            // SE LA CELLA SOTTO NON E' ROSSA (Smart) O BLU (Corso), FERMATI E NON MANDARE NOTIFICHE
+            if (bottomColor !== '#E74C3C' && bottomColor !== '#3498DB') {
+                continue; 
+            }
+
+            // Trova il turno dalla cella Top per calcolare gli orari Mattina/Pomeriggio
+            let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
             if (shiftColor === 'none') {
                 shiftColor = getAutoColor(y, m, day);
             }
@@ -568,39 +587,32 @@ function scheduleNotifications() {
             let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
 
             const sendNtfy = (timeObj, message) => {
-                
-                // CALCOLO IL RITARDO IN SECONDI INVECE CHE COME DATA ASSOLUTA
                 const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
                 
-                // Se mancano meno di 60 secondi (o il tempo è già passato), non lo mando 
-                // per evitare l'errore 400 di Ntfy (Bad Request per tempo già scaduto)
                 if (delaySeconds < 60) return;
 
-                // ID Unico per localStorage basato sul timestamp per evitare di mandarlo due volte
                 const ts = Math.floor(timeObj.getTime() / 1000);
                 const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
                 
                 if (!localStorage.getItem(storageKey)) {
                     
-                    alert(`Sto programmando la notifica "${message}" per il giorno ${day}/${m} alle ore ${timeObj.getHours()}:${String(timeObj.getMinutes()).padStart(2, '0')}`);
+                    // Console log invisibile per debugging per capire cosa fa il sistema
+                    console.log(`Pianificata notifica "${message}" per il ${day}/${m} tra ${delaySeconds}s`);
 
                     fetch(`https://ntfy.sh/${topic}`, {
                         method: 'POST',
                         body: message,
                         headers: {
-                            'Title': 'Promemoria Turno', // NO EMOJI QUI (Errore ISO-8859-1)
-                            'Delay': delaySeconds + 's', // CONTO ALLA ROVESCIA (Es. "3600s")
-                            'Tags': 'rotating_light,briefcase' // EMOJI DA QUI
+                            'Title': 'Promemoria Turno', 
+                            'Delay': delaySeconds + 's', 
+                            'Tags': 'rotating_light,briefcase' 
                         }
                     }).then(res => {
                         if(res.ok) {
                             localStorage.setItem(storageKey, 'true');
-                            alert(`✅ Server Ntfy ha accettato la notifica: "${message}"`);
-                        } else {
-                            alert(`❌ ERRORE Server Ntfy: ${res.status}`);
                         }
                     }).catch(e => {
-                        alert(`❌ Errore di connessione a Ntfy: ${e.message}`);
+                        console.error('Errore Ntfy:', e);
                     });
                 }
             };
@@ -609,7 +621,7 @@ function scheduleNotifications() {
             sendNtfy(exitTime, "Timbra uscita");
         }
     } catch(err) {
-        alert("❌ Errore sistema notifiche: " + err);
+        console.error("Errore script notifiche:", err);
     }
 }
 
@@ -623,7 +635,9 @@ function scrollToToday() {
         const toolbarHeight = document.getElementById('mainToolbar').offsetHeight;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = target.getBoundingClientRect().top;
+        
         const offsetPosition = (elementRect - bodyRect) - toolbarHeight - 10;
+        
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }, 250);
