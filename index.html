@@ -244,11 +244,10 @@ auth.onAuthStateChanged(user => {
           db = s.val() || {};
           render();
           
-          // Chiama in modo sicuro le notifiche ntfy con un delay (silenziosamente)
           setTimeout(scheduleNotifications, 1000);
           
           if (initialLoad) {
-             setTimeout(scrollToToday, 300); 
+             setTimeout(scrollToToday, 300);
              initialLoad = false;
              setupPointerEvents();
           }
@@ -279,18 +278,19 @@ function logout() {
   initialLoad = true;
 }
 
-// Menu e Colori
+// Menu e Colori (INCLUSO STIPENDIO)
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: '', isAdd: false},
   {id:'pomeriggio', label:'Pom.', hex:'#F5CBA7', autoText: '', isAdd: false}, 
   {id:'smart', label:'Smart', hex:'#E74C3C', autoText: '', isAdd: false},
   {id:'ferie', label:'Ferie', hex:'#566573', autoText: '', isAdd: false},
-  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: false},
-  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: false},
+  {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: true},
+  {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: true},
   {id:'corso', label:'Corso', hex:'#3498DB', autoText: 'Corso', isAdd: false},
   {id:'allatto', label:'Allatto', hex:'#9B59B6', autoText: '🟣', isAdd: true},
-  {id:'festivita', label:'Festività', hex:'#A7F3D0', autoText: '', isAdd: false}
+  {id:'festivita', label:'Festività', hex:'#A7F3D0', autoText: '', isAdd: false},
+  {id:'stipendio', label:'Stipendio 💰', hex:'none', autoText: 'Stipendio 💰', isAdd: true}
 ];
 
 const darkBgColors = ['#E74C3C', '#566573', '#3498DB', '#9B59B6'];
@@ -481,7 +481,7 @@ function render() {
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div><div class="note-row">`;
-      // RIGA APPUNTI / TASK
+      // RIGA APPUNTI E TASK
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
@@ -526,9 +526,8 @@ for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
-
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (SILENZIOSA)
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY
 // ==========================================
 function scheduleNotifications() {
     try {
@@ -544,88 +543,85 @@ function scheduleNotifications() {
             const day = d.getDate();
             const dow = d.getDay();
 
-            if(dow === 0 || dow === 6) continue;
-
-            // RECUPERO CELLE TOP E BOTTOM
             const kTop = `${y}-${m}-${day}-top`;
             const kBottom = `${y}-${m}-${day}-bottom`;
             const userTop = db[kTop] || {};
             const userBottom = db[kBottom] || {};
 
-            // CONTROLLO CELLA BOTTOM (Smart o Corso)
-            let bottomColor = userBottom.color && userBottom.color !== 'none' ? COLORS.find(c=>c.id===userBottom.color).hex : 'none';
-            
-            // SE LA CELLA SOTTO NON E' ROSSA (Smart) O BLU (Corso), FERMATI E NON MANDARE NOTIFICHE
-            if (bottomColor !== '#E74C3C' && bottomColor !== '#3498DB') {
-                continue; 
-            }
+            const bottomText = (userBottom.text || "").toLowerCase();
+            const bottomColor = userBottom.color && userBottom.color !== 'none' ? COLORS.find(c=>c.id===userBottom.color).hex : 'none';
 
-            // Trova il turno dalla cella Top per calcolare gli orari Mattina/Pomeriggio
-            let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
-            if (shiftColor === 'none') {
-                shiftColor = getAutoColor(y, m, day);
-            }
-
-            if(shiftColor === '#566573' || shiftColor === '#A7F3D0') continue;
-
-            let entryH, entryM, exitH, exitM;
-
-            if (shiftColor === '#D6EAF8') { // MATTINA
-                entryH = 6; entryM = 30;
-                if (dow === 5) { exitH = 13; exitM = 30; } // Venerdi
-                else { exitH = 13; exitM = 45; } // Lun-Gio
-            } 
-            else if (shiftColor === '#F5CBA7') { // POMERIGGIO
-                if (dow === 5) { entryH = 13; entryM = 30; exitH = 20; exitM = 30; } // Venerdi
-                else { entryH = 13; entryM = 45; exitH = 21; exitM = 0; } // Lun-Gio
-            } 
-            else {
-                continue; 
-            }
-
-            let entryTime = new Date(y, m-1, day, entryH, entryM, 0);
-            let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
-
-            const sendNtfy = (timeObj, message) => {
+            // Funzione di invio
+            const sendNtfy = (timeObj, message, tags) => {
                 const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
-                
-                if (delaySeconds < 60) return;
+                if (delaySeconds < 60) return; // Meno di un minuto o già passato
 
                 const ts = Math.floor(timeObj.getTime() / 1000);
                 const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
                 
                 if (!localStorage.getItem(storageKey)) {
-                    
-                    // Console log invisibile per debugging per capire cosa fa il sistema
-                    console.log(`Pianificata notifica "${message}" per il ${day}/${m} tra ${delaySeconds}s`);
-
+                    console.log(`Programmo "${message}" per il ${day}/${m} tra ${delaySeconds}s`);
                     fetch(`https://ntfy.sh/${topic}`, {
                         method: 'POST',
                         body: message,
                         headers: {
-                            'Title': 'Promemoria Turno', 
+                            'Title': 'Promemoria', 
                             'Delay': delaySeconds + 's', 
-                            'Tags': 'rotating_light,briefcase' 
+                            'Tags': tags 
                         }
                     }).then(res => {
                         if(res.ok) {
                             localStorage.setItem(storageKey, 'true');
                         }
-                    }).catch(e => {
-                        console.error('Errore Ntfy:', e);
-                    });
+                    }).catch(e => console.error("Errore Fetch Ntfy: ", e));
                 }
             };
 
-            sendNtfy(entryTime, "Timbra entrata");
-            sendNtfy(exitTime, "Timbra uscita");
+            // 1. NOTIFICA STIPENDIO
+            if (bottomText.includes('stipendio')) {
+                let stipendioTime = new Date(y, m-1, day, 15, 55, 0);
+                sendNtfy(stipendioTime, "Arrivato lo stipendio!", "money_with_wings,tada");
+            }
+
+            // 2. NOTIFICA TIMBRATURE TURNI (Solo se Cella Bottom è Smart o Corso)
+            if (bottomColor === '#E74C3C' || bottomColor === '#3498DB') {
+                if(dow === 0 || dow === 6) continue;
+
+                let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
+                if (shiftColor === 'none') {
+                    shiftColor = getAutoColor(y, m, day);
+                }
+
+                if(shiftColor === '#566573' || shiftColor === '#A7F3D0') continue;
+
+                let entryH, entryM, exitH, exitM;
+
+                if (shiftColor === '#D6EAF8') { // MATTINA
+                    entryH = 6; entryM = 30;
+                    if (dow === 5) { exitH = 13; exitM = 30; } // Venerdi
+                    else { exitH = 13; exitM = 45; } // Lun-Gio
+                } 
+                else if (shiftColor === '#F5CBA7') { // POMERIGGIO
+                    if (dow === 5) { entryH = 13; entryM = 30; exitH = 20; exitM = 30; } // Venerdi
+                    else { entryH = 13; entryM = 45; exitH = 21; exitM = 0; } // Lun-Gio
+                } 
+                else {
+                    continue; 
+                }
+
+                let entryTime = new Date(y, m-1, day, entryH, entryM, 0);
+                let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
+
+                sendNtfy(entryTime, "Timbra entrata", "rotating_light,briefcase");
+                sendNtfy(exitTime, "Timbra uscita", "rotating_light,briefcase");
+            }
         }
     } catch(err) {
-        console.error("Errore script notifiche:", err);
+        console.error("Errore sistema notifiche: " + err);
     }
 }
 
-// Funzione di scorrimento (Scroll to Today)
+// Funzione di scorrimento
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
@@ -635,9 +631,7 @@ function scrollToToday() {
         const toolbarHeight = document.getElementById('mainToolbar').offsetHeight;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = target.getBoundingClientRect().top;
-        
         const offsetPosition = (elementRect - bodyRect) - toolbarHeight - 10;
-        
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }, 250);
