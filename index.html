@@ -527,7 +527,7 @@ s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (VERSIONE FINALE)
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (DEFINTIVA)
 // ==========================================
 function scheduleNotifications() {
     try {
@@ -535,11 +535,11 @@ function scheduleNotifications() {
         const now = new Date();
 
         // Funzione di invio
-        const sendNtfy = (timeObj, message, tags, actionHeader = "") => {
+        const sendNtfy = (timeObj, message, tags, actionHeader = "", title = "Promemoria Turno") => {
             const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
             
-            // Rimesso a 60 secondi per l'uso normale (evita spam se ricarichi la pagina)
-            if (delaySeconds < 60) return; 
+            // 🚨 LIMITE ANTISPAM: Minimo 60 sec, Massimo 3 giorni (259000 sec)
+            if (delaySeconds < 60 || delaySeconds > 259000) return; 
 
             const ts = Math.floor(timeObj.getTime() / 1000);
             const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
@@ -548,10 +548,10 @@ function scheduleNotifications() {
                 console.log(`Programmo "${message}" tra ${delaySeconds}s`);
                 
                 let fetchHeaders = {
-                    'Title': 'Promemoria Turno', 
+                    'Title': title, 
                     'Delay': delaySeconds + 's', 
                     'Tags': tags,
-                    'Priority': 'high' // Mantenuto per forzare l'accensione dello schermo su iPhone
+                    'Priority': 'high' 
                 };
 
                 if (actionHeader !== "") {
@@ -571,7 +571,8 @@ function scheduleNotifications() {
             }
         };
 
-        for(let i=0; i<3; i++) {
+        // Aumentato a 5 giorni per coprire bene i briefing serali
+        for(let i=0; i<5; i++) {
             let d = new Date();
             d.setDate(now.getDate() + i);
 
@@ -591,18 +592,60 @@ function scheduleNotifications() {
             // 1. NOTIFICA STIPENDIO
             if (bottomText.includes('stipendio')) {
                 let stipendioTime = new Date(y, m-1, day, 15, 55, 0);
-                sendNtfy(stipendioTime, "Arrivato lo stipendio!", "money_with_wings,tada");
+                sendNtfy(stipendioTime, "Arrivato lo stipendio!", "money_with_wings,tada", "", "Stipendio!");
             }
 
-            // 2. NOTIFICA TIMBRATURE TURNI
-            if (bottomColor === '#E74C3C' || bottomColor === '#3498DB') {
-                if(dow === 0 || dow === 6) continue;
+            // Calcolo colore turno (Azzurro = Mattina, Arancione = Pomeriggio)
+            let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
+            if (shiftColor === 'none') {
+                shiftColor = getAutoColor(y, m, day);
+            }
 
-                let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
-                if (shiftColor === 'none') {
-                    shiftColor = getAutoColor(y, m, day);
+            // -----------------------------------------------------
+            // 🌙 2. BRIEFING SERALE (Alle 21:00 del giorno PRIMA)
+            // -----------------------------------------------------
+            // Verifica che il giorno del turno sia tra Lunedì (1) e Venerdì (5)
+            // e che non sia un giorno di Ferie (#566573) o Festività (#A7F3D0)
+            if (dow >= 1 && dow <= 5 && shiftColor !== '#566573' && shiftColor !== '#A7F3D0') {
+                
+                let isMattina = (shiftColor === '#D6EAF8');
+                let isPomeriggio = (shiftColor === '#F5CBA7');
+                
+                // Smart (#E74C3C) o Corso (#3498DB) contano come "Casa"
+                let isCasa = (bottomColor === '#E74C3C' || bottomColor === '#3498DB');
+                // Colore 'none' (Bianco/Vuoto) conta come "Sede"
+                let isSede = (bottomColor === 'none');
+
+                let msgBriefing = "";
+                let tagsBriefing = "";
+
+                // Generazione del messaggio in base alle tue regole
+                if (isPomeriggio && isCasa) {
+                    msgBriefing = "Domani fai pomeriggio, puoi alzarti senza sveglia.";
+                    tagsBriefing = "bed,coffee";
+                } else if (isPomeriggio && isSede) {
+                    msgBriefing = "Domani fai pomeriggio in sede, devi prendere il treno.";
+                    tagsBriefing = "train,office";
+                } else if (isMattina && isCasa) {
+                    msgBriefing = "Domani fai mattina da casa, sveglia alle 6.25.";
+                    tagsBriefing = "house,alarm_clock";
+                } else if (isMattina && isSede) {
+                    msgBriefing = "Domani fai mattina dalla sede, sveglia alle 5.36.";
+                    tagsBriefing = "train,alarm_clock";
                 }
 
+                if (msgBriefing !== "") {
+                    // Imposta l'orario alle 21:00 del giorno precedente
+                    let briefingTime = new Date(y, m-1, day - 1, 21, 0, 0);
+                    sendNtfy(briefingTime, msgBriefing, tagsBriefing, "", "Briefing Domani");
+                }
+            }
+
+            // -----------------------------------------------------
+            // 3. NOTIFICA TIMBRATURE TURNI (Solo se Smart o Corso)
+            // -----------------------------------------------------
+            if (bottomColor === '#E74C3C' || bottomColor === '#3498DB') {
+                if(dow === 0 || dow === 6) continue;
                 if(shiftColor === '#566573' || shiftColor === '#A7F3D0') continue;
 
                 let entryH, entryM, exitH, exitM;
