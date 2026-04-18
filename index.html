@@ -527,12 +527,49 @@ s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (VERSIONE FINALE)
 // ==========================================
 function scheduleNotifications() {
     try {
         const topic = "calendargabriele172636181919"; 
         const now = new Date();
+
+        // Funzione di invio
+        const sendNtfy = (timeObj, message, tags, actionHeader = "") => {
+            const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
+            
+            // Rimesso a 60 secondi per l'uso normale (evita spam se ricarichi la pagina)
+            if (delaySeconds < 60) return; 
+
+            const ts = Math.floor(timeObj.getTime() / 1000);
+            const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
+            
+            if (!localStorage.getItem(storageKey)) {
+                console.log(`Programmo "${message}" tra ${delaySeconds}s`);
+                
+                let fetchHeaders = {
+                    'Title': 'Promemoria Turno', 
+                    'Delay': delaySeconds + 's', 
+                    'Tags': tags,
+                    'Priority': 'high' // Mantenuto per forzare l'accensione dello schermo su iPhone
+                };
+
+                if (actionHeader !== "") {
+                    fetchHeaders['Actions'] = actionHeader;
+                }
+
+                fetch(`https://ntfy.sh/${topic}`, {
+                    method: 'POST',
+                    body: message,
+                    headers: fetchHeaders
+                }).then(res => {
+                    if(res.ok) {
+                        localStorage.setItem(storageKey, 'true');
+                        console.log("✅ Inviato a ntfy:", message);
+                    }
+                }).catch(e => console.error("Errore Fetch Ntfy: ", e));
+            }
+        };
 
         for(let i=0; i<3; i++) {
             let d = new Date();
@@ -551,39 +588,13 @@ function scheduleNotifications() {
             const bottomText = (userBottom.text || "").toLowerCase();
             const bottomColor = userBottom.color && userBottom.color !== 'none' ? COLORS.find(c=>c.id===userBottom.color).hex : 'none';
 
-            // Funzione di invio
-            const sendNtfy = (timeObj, message, tags) => {
-                const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
-                if (delaySeconds < 60) return; // Meno di un minuto o già passato
-
-                const ts = Math.floor(timeObj.getTime() / 1000);
-                const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
-                
-                if (!localStorage.getItem(storageKey)) {
-                    console.log(`Programmo "${message}" per il ${day}/${m} tra ${delaySeconds}s`);
-                    fetch(`https://ntfy.sh/${topic}`, {
-                        method: 'POST',
-                        body: message,
-                        headers: {
-                            'Title': 'Promemoria', 
-                            'Delay': delaySeconds + 's', 
-                            'Tags': tags 
-                        }
-                    }).then(res => {
-                        if(res.ok) {
-                            localStorage.setItem(storageKey, 'true');
-                        }
-                    }).catch(e => console.error("Errore Fetch Ntfy: ", e));
-                }
-            };
-
             // 1. NOTIFICA STIPENDIO
             if (bottomText.includes('stipendio')) {
                 let stipendioTime = new Date(y, m-1, day, 15, 55, 0);
                 sendNtfy(stipendioTime, "Arrivato lo stipendio!", "money_with_wings,tada");
             }
 
-            // 2. NOTIFICA TIMBRATURE TURNI (Solo se Cella Bottom è Smart o Corso)
+            // 2. NOTIFICA TIMBRATURE TURNI
             if (bottomColor === '#E74C3C' || bottomColor === '#3498DB') {
                 if(dow === 0 || dow === 6) continue;
 
@@ -612,8 +623,8 @@ function scheduleNotifications() {
                 let entryTime = new Date(y, m-1, day, entryH, entryM, 0);
                 let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
 
-                sendNtfy(entryTime, "Timbra entrata", "rotating_light,briefcase");
-                sendNtfy(exitTime, "Timbra uscita", "rotating_light,briefcase");
+                sendNtfy(entryTime, "Timbra entrata", "rotating_light,briefcase", "view, Disattiva Full Immersion, shortcuts://run-shortcut?name=DisattivaFree");
+                sendNtfy(exitTime, "Timbra uscita", "rotating_light,briefcase", "view, Cambia Full Immersion, shortcuts://run-shortcut?name=AttivaFree");
             }
         }
     } catch(err) {
