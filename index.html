@@ -527,7 +527,7 @@ s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (DEFINTIVA)
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (DEFINITIVA CON SVEGLIE)
 // ==========================================
 function scheduleNotifications() {
     try {
@@ -602,7 +602,7 @@ function scheduleNotifications() {
             }
 
             // -----------------------------------------------------
-            // 🌙 2. BRIEFING SERALE (Alle 21:00 del giorno PRIMA)
+            // 🌙 2. BRIEFING SERALE CON PULSANTI SVEGLIA (Ore 21:00)
             // -----------------------------------------------------
             // Verifica che il giorno del turno sia tra Lunedì (1) e Venerdì (5)
             // e che non sia un giorno di Ferie (#566573) o Festività (#A7F3D0)
@@ -611,33 +611,35 @@ function scheduleNotifications() {
                 let isMattina = (shiftColor === '#D6EAF8');
                 let isPomeriggio = (shiftColor === '#F5CBA7');
                 
-                // Smart (#E74C3C) o Corso (#3498DB) contano come "Casa"
                 let isCasa = (bottomColor === '#E74C3C' || bottomColor === '#3498DB');
-                // Colore 'none' (Bianco/Vuoto) conta come "Sede"
                 let isSede = (bottomColor === 'none');
 
                 let msgBriefing = "";
                 let tagsBriefing = "";
+                let actionBriefing = ""; 
 
-                // Generazione del messaggio in base alle tue regole
                 if (isPomeriggio && isCasa) {
                     msgBriefing = "Domani fai pomeriggio, puoi alzarti senza sveglia.";
                     tagsBriefing = "bed,coffee";
+                    actionBriefing = ""; // Nessuna sveglia necessaria
                 } else if (isPomeriggio && isSede) {
                     msgBriefing = "Domani fai pomeriggio in sede, devi prendere il treno.";
                     tagsBriefing = "train,office";
+                    actionBriefing = "view, Imposta Sveglie (7.12), shortcuts://run-shortcut?name=AllarmeTreno";
                 } else if (isMattina && isCasa) {
                     msgBriefing = "Domani fai mattina da casa, sveglia alle 6.25.";
                     tagsBriefing = "house,alarm_clock";
+                    actionBriefing = "view, Imposta Sveglie (6.25), shortcuts://run-shortcut?name=AllarmeCasa";
                 } else if (isMattina && isSede) {
                     msgBriefing = "Domani fai mattina dalla sede, sveglia alle 5.36.";
                     tagsBriefing = "train,alarm_clock";
+                    actionBriefing = "view, Imposta Sveglie (5.36), shortcuts://run-shortcut?name=AllarmeSede";
                 }
 
                 if (msgBriefing !== "") {
                     // Imposta l'orario alle 21:00 del giorno precedente
                     let briefingTime = new Date(y, m-1, day - 1, 21, 0, 0);
-                    sendNtfy(briefingTime, msgBriefing, tagsBriefing, "", "Briefing Domani");
+                    sendNtfy(briefingTime, msgBriefing, tagsBriefing, actionBriefing, "Briefing Domani");
                 }
             }
 
@@ -690,6 +692,15 @@ function scrollToToday() {
     }
   }, 250);
 }
+
+// ==========================================
+// 🔄 AGGIORNAMENTO AUTOMATICO
+// ==========================================
+// Ricarica la pagina automaticamente ogni ora (3.600.000 millisecondi)
+setInterval(() => {
+    location.reload();
+}, 3600000);
+
 </script>
 </body>
 </html>
