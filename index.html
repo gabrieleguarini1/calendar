@@ -527,24 +527,47 @@ s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
 // ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (DEFINITIVA CON SVEGLIE)
+// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (ANTI-DOPPIONI CLOUD)
 // ==========================================
 function scheduleNotifications() {
     try {
         const topic = "calendargabriele172636181919"; 
         const now = new Date();
 
-        // Funzione di invio
+        // 1. Inizializza il nodo notifiche in Firebase se non esiste
+        if (!db.notifiche) db.notifiche = {};
+
+        // 2. Pulizia cloud: cancella le notifiche passate da oltre 2 giorni per non appesantire il database
+        let dbChanged = false;
+        const currentTs = Math.floor(Date.now() / 1000);
+        for (let key in db.notifiche) {
+            let parts = key.split('_');
+            if (parts.length >= 3) {
+                let alarmTs = parseInt(parts[2]);
+                if (currentTs > alarmTs + 172800) { // 172800 sec = 2 giorni
+                    delete db.notifiche[key];
+                    dbChanged = true;
+                }
+            }
+        }
+        if (dbChanged) pushToCloud(); // Aggiorna Firebase se ha pulito qualcosa
+
+        // 3. Funzione di invio
         const sendNtfy = (timeObj, message, tags, actionHeader = "", title = "Promemoria Turno") => {
             const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
             
-            // 🚨 LIMITE ANTISPAM: Minimo 60 sec, Massimo 3 giorni (259000 sec)
+            // 🚨 LIMITE ANTISPAM
             if (delaySeconds < 60 || delaySeconds > 259000) return; 
 
             const ts = Math.floor(timeObj.getTime() / 1000);
             const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
             
-            if (!localStorage.getItem(storageKey)) {
+            // 🛑 CONTROLLO CLOUD: Se la chiave NON è in Firebase, procedi!
+            if (!db.notifiche[storageKey]) {
+                
+                // Blocca subito localmente per evitare "doppi click" nello stesso istante
+                db.notifiche[storageKey] = 'pending';
+                
                 console.log(`Programmo "${message}" tra ${delaySeconds}s`);
                 
                 let fetchHeaders = {
@@ -564,10 +587,18 @@ function scheduleNotifications() {
                     headers: fetchHeaders
                 }).then(res => {
                     if(res.ok) {
-                        localStorage.setItem(storageKey, 'true');
-                        console.log("✅ Inviato a ntfy:", message);
+                        // Successo! Segna in Firebase che è stata inviata per tutti i dispositivi
+                        db.notifiche[storageKey] = 'true';
+                        pushToCloud(); 
+                        console.log("✅ Inviato a ntfy e salvato su Cloud:", message);
+                    } else {
+                        // Errore server, sblocca così ci riproviamo la prossima volta
+                        delete db.notifiche[storageKey];
                     }
-                }).catch(e => console.error("Errore Fetch Ntfy: ", e));
+                }).catch(e => {
+                    console.error("Errore Fetch Ntfy: ", e);
+                    delete db.notifiche[storageKey];
+                });
             }
         };
 
