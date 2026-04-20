@@ -87,7 +87,7 @@
   button.logout-btn { background: #E74C3C; color: white; border: none; font-weight: 600; }
   body.dark-mode button.dark-btn { background: #F3F4F6; color: #111827; }
 
-  /* Grid e Cards - Layout Base Desktop */
+  /* Grid e Cards */
   .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; margin-top: 10px; }
   
   .month-block { 
@@ -110,13 +110,12 @@
   .day-cell { height: 38px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
   .day-num { font-weight: 600; font-size: 17px; } 
 
-  /* Note (Task Style) */
+  /* Note */
   .note-cell { height: 95px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
   .note-cell::-webkit-scrollbar { width: 4px; }
   .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-  body.dark-mode .note-cell::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
   
-  /* Ring OGGI Ingrandito */
+  /* Ring OGGI */
   .today-ring { position: relative; }
   .today-ring::after { content: ''; position: absolute; inset: -1px; border: 3px solid var(--primary); border-radius: 4px; pointer-events: none; z-index: 10; }
   
@@ -135,37 +134,20 @@
   .color-opt:active { transform: scale(0.92); }
   .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
 
-  /* =========================================
-     📱 OTTIMIZZAZIONI MOBILE ESTREME 
-     ========================================= */
   @media (max-width: 600px) {
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
     .toolbar { padding: 6px; gap: 4px; }
     select, button { height: 32px; padding: 0 8px; font-size: 11px; }
-    #syncStatus { display: none; } 
-
     .cal-grid { gap: 15px; margin-top: 5px; }
-
-    .month-block {
-      height: calc(100dvh - 70px); 
-      display: flex; 
-      flex-direction: column;
-      scroll-margin-top: 65px; 
-      border-radius: 12px;
-    }
-
+    .month-block { height: calc(100dvh - 70px); display: flex; flex-direction: column; scroll-margin-top: 65px; border-radius: 12px; }
     .month-header { flex: 0 0 auto; padding: 6px; font-size: 15px; }
     .days-header { flex: 0 0 auto; }
     .day-name { padding: 4px 0; font-size: 9px; }
-
     .week-row { flex: 0 0 26px; }
     .note-row { flex: 1 1 0; min-height: 0; }
-
     .day-cell { height: 100%; }
     .day-num { font-size: 13px; }
-
     .note-cell { height: 100%; font-size: 9px; padding: 3px 2px; }
-    .note-cell > div { margin-bottom: 2px; }
     .today-ring::after { inset: 0px; border-width: 2px; }
   }
 </style>
@@ -214,7 +196,7 @@ function toggleDarkMode() {
   localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
 
-// Configurazione Firebase
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDeFEGyaHbvTB5GmQwvZ3LCRHEXliWPlE8",
   authDomain: "calendariosmart-4ae27.firebaseapp.com",
@@ -232,20 +214,15 @@ const database = firebase.database();
 let dbRef = null;
 let initialLoad = true;
 
-// Gestione Autenticazione
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
-    
     if(!dbRef) {
         dbRef = database.ref('calendario_dati');
         dbRef.on('value', (s) => {
           db = s.val() || {};
           render();
-          
-          setTimeout(scheduleNotifications, 1000);
-          
           if (initialLoad) {
              setTimeout(scrollToToday, 300);
              initialLoad = false;
@@ -264,21 +241,13 @@ function login() {
   const pass = document.getElementById('passwordInput').value;
   const errorDiv = document.getElementById('loginError');
   errorDiv.textContent = 'Accesso in corso...';
-  
   auth.signInWithEmailAndPassword(email, pass)
     .then(() => { errorDiv.textContent = ''; })
-    .catch(error => {
-      console.error(error);
-      errorDiv.textContent = 'Email o password errati.';
-    });
+    .catch(error => { errorDiv.textContent = 'Email o password errati.'; });
 }
 
-function logout() {
-  auth.signOut();
-  initialLoad = true;
-}
+function logout() { auth.signOut(); initialLoad = true; }
 
-// Menu e Colori (INCLUSO STIPENDIO)
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex:'#D6EAF8', autoText: '', isAdd: false},
@@ -295,7 +264,6 @@ const COLORS = [
 
 const darkBgColors = ['#E74C3C', '#566573', '#3498DB', '#9B59B6'];
 const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0']; 
-
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
@@ -311,9 +279,7 @@ function saveState() {
   historyStack.push(JSON.stringify(db));
   if(historyStack.length > 30) historyStack.shift();
 }
-
 function pushToCloud() { if(auth.currentUser) dbRef.set(db); }
-
 function undo() {
   if(historyStack.length > 0) {
     db = JSON.parse(historyStack.pop());
@@ -321,15 +287,11 @@ function undo() {
     render(); 
   }
 }
-
-window.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
-});
+window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
 
 function setupPointerEvents() {
     const grid = document.getElementById('calGrid');
     const getCell = (x, y) => document.elementFromPoint(x, y)?.closest('.cell:not(.empty)');
-
     grid.onpointerdown = (e) => {
         const cell = getCell(e.clientX, e.clientY);
         if (!cell) return;
@@ -338,7 +300,6 @@ function setupPointerEvents() {
         grid.setPointerCapture(e.pointerId);
         cell.classList.add('selected');
     };
-
     grid.onpointermove = (e) => {
         if (!isSelecting) return;
         const cell = getCell(e.clientX, e.clientY);
@@ -347,7 +308,6 @@ function setupPointerEvents() {
             cell.classList.add('selected');
         }
     };
-
     grid.onpointerup = (e) => {
         if (!isSelecting) return;
         isSelecting = false;
@@ -361,10 +321,7 @@ function openBulkEdit() {
       const data = db[selectedKeys[0]] || {};
       tempBulkColor = data.color || 'none';
       tempBulkText = data.text || "";
-  } else {
-      tempBulkColor = null;
-      tempBulkText = "";
-  }
+  } else { tempBulkColor = null; tempBulkText = ""; }
   document.getElementById('modalText').value = tempBulkText;
   renderColors();
   document.getElementById('modal').classList.add('active');
@@ -373,14 +330,9 @@ function openBulkEdit() {
 function renderColors() {
   document.getElementById('colorGrid').innerHTML = COLORS.map(c => {
     let bgStyle = c.hex === 'none' ? 'var(--card-bg)' : c.hex;
-    let textCol;
-    if (c.hex === 'none') textCol = 'var(--text-main)';
-    else if (darkBgColors.includes(c.hex)) textCol = '#ffffff';
-    else textCol = '#111827'; 
-
+    let textCol = (c.hex === 'none') ? 'var(--text-main)' : (darkBgColors.includes(c.hex) ? '#ffffff' : '#111827');
     const textShadow = darkBgColors.includes(c.hex) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
     const border = tempBulkColor===c.id ? '2px solid var(--primary)' : '1px solid var(--border-color)';
-    
     return `<div class="color-opt" style="background:${bgStyle}; border:${border}; color:${textCol}; ${textShadow}" onclick="selectBulkColor('${c.id}', event)">${c.label}</div>`;
   }).join('');
 }
@@ -389,15 +341,11 @@ function selectBulkColor(id, event) {
   event.stopPropagation();
   const colorObj = COLORS.find(c => c.id === id);
   if (!colorObj.isAdd) tempBulkColor = id;
-  
-  if (id === 'none') {
-      tempBulkText = '';
-      document.getElementById('modalText').value = '';
-  } else if (colorObj.autoText) {
+  if (id === 'none') { tempBulkText = ''; document.getElementById('modalText').value = ''; } 
+  else if (colorObj.autoText) {
       tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
       document.getElementById('modalText').value = tempBulkText;
   }
-  
   renderColors();
 }
 
@@ -405,14 +353,11 @@ function saveAndCloseModal() {
   const currentTxt = document.getElementById('modalText').value.trim();
   tempBulkText = currentTxt;
   saveState(); 
-  
   selectedKeys.forEach(k => {
     db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
     if(db[k].color === 'none' && db[k].text === '') delete db[k];
   });
-  
   pushToCloud();
-  
   document.getElementById('modal').classList.remove('active');
   document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
   selectedKeys = [];
@@ -438,19 +383,15 @@ function render() {
   grid.innerHTML = '';
   const today = new Date();
   const ty = today.getFullYear(), tm = today.getMonth(), td = today.getDate();
-
   for(let m=1; m<=12; m++) {
     const daysInM = new Date(currentYear, m, 0).getDate();
     const offset = new Date(currentYear, m-1, 1).getDay() === 0 ? 6 : new Date(currentYear, m-1, 1).getDay() - 1;
-
     let h = `<div class="month-block" id="m-${currentYear}-${m}">
       <div class="month-header">${MONTHS[m-1]} ${currentYear}</div>
       <div class="days-header">${DAYS.map(d => `<div class="day-name">${d}</div>`).join('')}</div>`;
-
     let d = 1 - offset;
     while(d <= daysInM) {
       h += `<div class="week-row">`;
-      // RIGA NUMERI
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
@@ -458,257 +399,50 @@ function render() {
           const isT = currentYear===ty && (m-1)===tm && cd===td;
           const user = db[k] || {};
           let hexCol = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
-          
           let bgStyle = hexCol;
           let isWeekend = false;
-
           if(bgStyle === 'none') {
             const dow = new Date(currentYear, m-1, cd).getDay();
             if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
             else { bgStyle = getAutoColor(currentYear, m, cd); }
           }
-
-          let textCol;
-          if (darkBgColors.includes(bgStyle)) textCol = '#ffffff';
-          else if (lightBgColors.includes(bgStyle)) textCol = '#111827';
-          else if (isWeekend) textCol = 'var(--weekend-text)';
-          else textCol = 'var(--default-text)';
-
+          let textCol = (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
           const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
-
-          h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">
-            <span class="day-num">${cd}</span></div>`;
+          h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}"><span class="day-num">${cd}</span></div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div><div class="note-row">`;
-      // RIGA APPUNTI E TASK
       for(let i=0; i<7; i++) {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
           const k = `${currentYear}-${m}-${cd}-bottom`;
           const user = db[k] || {};
           let hexCol = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
-          
           let bgStyle = hexCol;
           let isWeekend = false;
-
           if (bgStyle === 'none') {
             const dow = new Date(currentYear, m-1, cd).getDay();
             if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
             else { bgStyle = 'var(--default-cell-bg)'; }
           }
-
-          let textCol;
-          if (darkBgColors.includes(bgStyle)) textCol = '#ffffff';
-          else if (lightBgColors.includes(bgStyle)) textCol = '#111827';
-          else if (isWeekend) textCol = 'var(--weekend-text)';
-          else textCol = 'var(--default-text)';
-
+          let textCol = (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
           const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
-
-          // Parsing per formattare come Task List
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
           const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
-
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
-      h += `</div>`;
-      d += 7;
+      h += `</div>`; d += 7;
     }
     grid.innerHTML += h + `</div>`;
   }
 }
 
-// MENU ANNI
 const s = document.getElementById('yearSel');
 for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
 
-// ==========================================
-// ⏰ LOGICA NOTIFICHE RITARDATE NTFY (ANTI-DOPPIONI CLOUD)
-// ==========================================
-function scheduleNotifications() {
-    try {
-        const topic = "calendargabriele172636181919"; 
-        const now = new Date();
-
-        // 1. Inizializza il nodo notifiche in Firebase se non esiste
-        if (!db.notifiche) db.notifiche = {};
-
-        // 2. Pulizia cloud: cancella le notifiche passate da oltre 2 giorni per non appesantire il database
-        let dbChanged = false;
-        const currentTs = Math.floor(Date.now() / 1000);
-        for (let key in db.notifiche) {
-            let parts = key.split('_');
-            if (parts.length >= 3) {
-                let alarmTs = parseInt(parts[2]);
-                if (currentTs > alarmTs + 172800) { // 172800 sec = 2 giorni
-                    delete db.notifiche[key];
-                    dbChanged = true;
-                }
-            }
-        }
-        if (dbChanged) pushToCloud(); // Aggiorna Firebase se ha pulito qualcosa
-
-        // 3. Funzione di invio
-        const sendNtfy = (timeObj, message, tags, actionHeader = "", title = "Promemoria Turno") => {
-            const delaySeconds = Math.floor((timeObj.getTime() - Date.now()) / 1000);
-            
-            // 🚨 LIMITE ANTISPAM
-            if (delaySeconds < 60 || delaySeconds > 259000) return; 
-
-            const ts = Math.floor(timeObj.getTime() / 1000);
-            const storageKey = `ntfy_alarm_${ts}_${message.replace(/\s/g,'')}`;
-            
-            // 🛑 CONTROLLO CLOUD: Se la chiave NON è in Firebase, procedi!
-            if (!db.notifiche[storageKey]) {
-                
-                // Blocca subito localmente per evitare "doppi click" nello stesso istante
-                db.notifiche[storageKey] = 'pending';
-                
-                console.log(`Programmo "${message}" tra ${delaySeconds}s`);
-                
-                let fetchHeaders = {
-                    'Title': title, 
-                    'Delay': delaySeconds + 's', 
-                    'Tags': tags,
-                    'Priority': 'high' 
-                };
-
-                if (actionHeader !== "") {
-                    fetchHeaders['Actions'] = actionHeader;
-                }
-
-                fetch(`https://ntfy.sh/${topic}`, {
-                    method: 'POST',
-                    body: message,
-                    headers: fetchHeaders
-                }).then(res => {
-                    if(res.ok) {
-                        // Successo! Segna in Firebase che è stata inviata per tutti i dispositivi
-                        db.notifiche[storageKey] = 'true';
-                        pushToCloud(); 
-                        console.log("✅ Inviato a ntfy e salvato su Cloud:", message);
-                    } else {
-                        // Errore server, sblocca così ci riproviamo la prossima volta
-                        delete db.notifiche[storageKey];
-                    }
-                }).catch(e => {
-                    console.error("Errore Fetch Ntfy: ", e);
-                    delete db.notifiche[storageKey];
-                });
-            }
-        };
-
-        // Aumentato a 5 giorni per coprire bene i briefing serali
-        for(let i=0; i<5; i++) {
-            let d = new Date();
-            d.setDate(now.getDate() + i);
-
-            const y = d.getFullYear();
-            const m = d.getMonth() + 1;
-            const day = d.getDate();
-            const dow = d.getDay();
-
-            const kTop = `${y}-${m}-${day}-top`;
-            const kBottom = `${y}-${m}-${day}-bottom`;
-            const userTop = db[kTop] || {};
-            const userBottom = db[kBottom] || {};
-
-            const bottomText = (userBottom.text || "").toLowerCase();
-            const bottomColor = userBottom.color && userBottom.color !== 'none' ? COLORS.find(c=>c.id===userBottom.color).hex : 'none';
-
-            // 1. NOTIFICA STIPENDIO
-            if (bottomText.includes('stipendio')) {
-                let stipendioTime = new Date(y, m-1, day, 15, 55, 0);
-                sendNtfy(stipendioTime, "Arrivato lo stipendio!", "money_with_wings,tada", "", "Stipendio!");
-            }
-
-            // Calcolo colore turno (Azzurro = Mattina, Arancione = Pomeriggio)
-            let shiftColor = userTop.color && userTop.color !== 'none' ? COLORS.find(c=>c.id===userTop.color).hex : 'none';
-            if (shiftColor === 'none') {
-                shiftColor = getAutoColor(y, m, day);
-            }
-
-            // -----------------------------------------------------
-            // 🌙 2. BRIEFING SERALE CON PULSANTI SVEGLIA (Ore 21:00)
-            // -----------------------------------------------------
-            // Verifica che il giorno del turno sia tra Lunedì (1) e Venerdì (5)
-            // e che non sia un giorno di Ferie (#566573) o Festività (#A7F3D0)
-            if (dow >= 1 && dow <= 5 && shiftColor !== '#566573' && shiftColor !== '#A7F3D0') {
-                
-                let isMattina = (shiftColor === '#D6EAF8');
-                let isPomeriggio = (shiftColor === '#F5CBA7');
-                
-                let isCasa = (bottomColor === '#E74C3C' || bottomColor === '#3498DB');
-                let isSede = (bottomColor === 'none');
-
-                let msgBriefing = "";
-                let tagsBriefing = "";
-                let actionBriefing = ""; 
-
-                if (isPomeriggio && isCasa) {
-                    msgBriefing = "Domani fai pomeriggio, puoi alzarti senza sveglia.";
-                    tagsBriefing = "bed,coffee";
-                    actionBriefing = ""; // Nessuna sveglia necessaria
-                } else if (isPomeriggio && isSede) {
-                    msgBriefing = "Domani fai pomeriggio in sede, devi prendere il treno.";
-                    tagsBriefing = "train,office";
-                    actionBriefing = "view, Imposta Sveglie (7.12), shortcuts://run-shortcut?name=AllarmeTreno";
-                } else if (isMattina && isCasa) {
-                    msgBriefing = "Domani fai mattina da casa, sveglia alle 6.25.";
-                    tagsBriefing = "house,alarm_clock";
-                    actionBriefing = "view, Imposta Sveglie (6.25), shortcuts://run-shortcut?name=AllarmeCasa";
-                } else if (isMattina && isSede) {
-                    msgBriefing = "Domani fai mattina dalla sede, sveglia alle 5.36.";
-                    tagsBriefing = "train,alarm_clock";
-                    actionBriefing = "view, Imposta Sveglie (5.36), shortcuts://run-shortcut?name=AllarmeSede";
-                }
-
-                if (msgBriefing !== "") {
-                    // Imposta l'orario alle 21:00 del giorno precedente
-                    let briefingTime = new Date(y, m-1, day - 1, 21, 0, 0);
-                    sendNtfy(briefingTime, msgBriefing, tagsBriefing, actionBriefing, "Briefing Domani");
-                }
-            }
-
-            // -----------------------------------------------------
-            // 3. NOTIFICA TIMBRATURE TURNI (Solo se Smart o Corso)
-            // -----------------------------------------------------
-            if (bottomColor === '#E74C3C' || bottomColor === '#3498DB') {
-                if(dow === 0 || dow === 6) continue;
-                if(shiftColor === '#566573' || shiftColor === '#A7F3D0') continue;
-
-                let entryH, entryM, exitH, exitM;
-
-                if (shiftColor === '#D6EAF8') { // MATTINA
-                    entryH = 6; entryM = 30;
-                    if (dow === 5) { exitH = 13; exitM = 30; } // Venerdi
-                    else { exitH = 13; exitM = 45; } // Lun-Gio
-                } 
-                else if (shiftColor === '#F5CBA7') { // POMERIGGIO
-                    if (dow === 5) { entryH = 13; entryM = 30; exitH = 20; exitM = 30; } // Venerdi
-                    else { entryH = 13; entryM = 45; exitH = 21; exitM = 0; } // Lun-Gio
-                } 
-                else {
-                    continue; 
-                }
-
-                let entryTime = new Date(y, m-1, day, entryH, entryM, 0);
-                let exitTime = new Date(y, m-1, day, exitH, exitM, 0);
-
-                sendNtfy(entryTime, "Timbra entrata", "rotating_light,briefcase", "view, Disattiva Full Immersion, shortcuts://run-shortcut?name=DisattivaFree");
-                sendNtfy(exitTime, "Timbra uscita", "rotating_light,briefcase", "view, Cambia Full Immersion, shortcuts://run-shortcut?name=AttivaFree");
-            }
-        }
-    } catch(err) {
-        console.error("Errore sistema notifiche: " + err);
-    }
-}
-
-// Funzione di scorrimento
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
@@ -723,15 +457,6 @@ function scrollToToday() {
     }
   }, 250);
 }
-
-// ==========================================
-// 🔄 AGGIORNAMENTO AUTOMATICO
-// ==========================================
-// Ricarica la pagina automaticamente ogni ora (3.600.000 millisecondi)
-setInterval(() => {
-    location.reload();
-}, 3600000);
-
 </script>
 </body>
 </html>
