@@ -101,8 +101,8 @@
     <select id="yearSel"></select>
     <button onclick="scrollToToday()">📍 Oggi</button>
     <button onclick="showStats()" style="background: var(--primary); color: white;">📊 Riepilogo</button>
-    <button onclick="location.reload()">UPLD</button>
-    <button onclick="undo()">UNDO</button>
+    <button onclick="location.reload()" title="Aggiorna">🔄</button>
+    <button onclick="undo()" title="Torna indietro">↩️</button>
     <button onclick="logout()">Esci</button>
   </div>
 
@@ -110,7 +110,7 @@
 
   <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
     <div class="modal">
-      <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 18px;">📊 Riepilogo & Strumenti</h4>
+      <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 18px;">📋 Riepilogo Mese e Meteo</h4>
       
       <div id="statsContent" style="line-height:1.9; font-size:14px; font-weight:500; margin-bottom: 20px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
       
@@ -207,7 +207,7 @@ let selectedKeys = []; let isSelecting = false; let tempBulkColor = null; let te
 function pushToCloud() { if(auth.currentUser) dbRef.set(db); }
 
 // ===============================================
-// FUNZIONI PREMIUM: STATS, STIPENDIO, METEO, CONDIVIDI
+// FUNZIONI PREMIUM: STATS, STIPENDIO (CON CENSURA)
 // ===============================================
 
 function showStats() {
@@ -275,10 +275,25 @@ function showStats() {
     <div style="text-align:center;">
         💰 <b>Previsione Stipendio Mese:</b><br>
         <span style="font-size:11px; color:gray;">Base: 3745,20€ | Ind: +${indennitaTurno.toFixed(2)}€ | Magg: +${maggiorazioneTurno.toFixed(2)}€</span><br>
-        <span style="font-size:26px; font-weight:700; color:#27AE60;">€ ${stipendioNetto.toFixed(2).replace('.', ',')}</span>
+        <div style="display: flex; align-items: center; justify-content: center; margin-top: 5px;">
+            <span id="stipendioAmount" style="font-size:26px; font-weight:700; color:#27AE60;" data-amount="€ ${stipendioNetto.toFixed(2).replace('.', ',')}">€ ${stipendioNetto.toFixed(2).replace('.', ',')}</span>
+            <button onclick="toggleStipendio(this)" style="background:transparent; border:none; box-shadow:none; font-size:22px; cursor:pointer; padding:0; margin-left:10px; height:auto;" title="Nascondi importo">🙈</button>
+        </div>
     </div>
   `;
   document.getElementById('statsOverlay').classList.add('active');
+}
+
+// LOGICA NASCONDI STIPENDIO
+function toggleStipendio(btn) {
+  const el = document.getElementById('stipendioAmount');
+  if (el.innerText.includes('***')) {
+    el.innerText = el.getAttribute('data-amount');
+    btn.innerText = '🙈';
+  } else {
+    el.innerText = '***,** €';
+    btn.innerText = '👁️';
+  }
 }
 
 function shareWeek() {
