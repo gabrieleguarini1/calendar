@@ -184,9 +184,9 @@
   <div class="cal-grid" id="calGrid"></div>
 
   <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
-    <div class="modal">
+    <div class="modal" style="width: 380px;">
       <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 18px;">📊 Riepilogo Mese Corrente</h4>
-      <div id="statsContent" style="line-height:2.2; font-size:14px; font-weight:500;"></div>
+      <div id="statsContent" style="line-height:1.9; font-size:14px; font-weight:500;"></div>
       <button class="btn-save" onclick="document.getElementById('statsOverlay').classList.remove('active')">CHIUDI</button>
     </div>
   </div>
@@ -313,7 +313,7 @@ function undo() {
 window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
 
 // ==========================================
-// NUOVE FUNZIONI AGGIUNTE (STATS, SHARE, METEO)
+// FUNZIONI AGGIUNTE (STATS, STIPENDIO, SHARE, METEO)
 // ==========================================
 
 function showStats() {
@@ -321,6 +321,8 @@ function showStats() {
   const m = now.getMonth() + 1; // Mese corrente
   const y = now.getFullYear();
   let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0 };
+  let giorniLavoroEffettivi = 0;
+  let oreMaggiorazione = 0;
   
   const daysInMonth = new Date(y, m, 0).getDate();
 
@@ -340,18 +342,37 @@ function showStats() {
          const autoHex = getAutoColor(y, m, d);
          topColor = autoHex === '#D6EAF8' ? 'mattina' : 'pomeriggio';
      }
+
+     let isFerie = (botColor === 'ferie' || text.includes('ferie') || topColor === 'ferie');
+     let isFestivita = (botColor === 'festivita' || text.includes('festivita') || topColor === 'festivita');
+
      if (topColor === 'mattina') stats.MATTINA++;
      if (topColor === 'pomeriggio') stats.POMERIGGIO++;
 
      // Calcolo Ferie, Smart Working (Rosso) o Sede (Bianco)
-     if (botColor === 'ferie' || text.includes('ferie')) {
+     if (isFerie) {
          stats.FERIE++;
      } else if (botColor === 'smart' || text.includes('smart')) {
          stats.SMART++;
      } else if (botColor === 'none') {
          stats.SEDE++; // Task Bianco = Presenza in sede
      }
+     
+     // CALCOLO STIPENDIO (Solo giorni di lavoro effettivo, niente ferie/festività)
+     if (!isFerie && !isFestivita) {
+         giorniLavoroEffettivi++;
+         if (topColor === 'mattina') oreMaggiorazione += 1.5;
+         if (topColor === 'pomeriggio') oreMaggiorazione += 1.0;
+     }
   }
+
+  // CALCOLI MATEMATICI ESATTI
+  const stipendioBase = 3745.20;
+  const indennitaTurno = giorniLavoroEffettivi * 8.07692;
+  const maggiorazioneTurno = oreMaggiorazione * 8.01595;
+  const totaleLordo = stipendioBase + indennitaTurno + maggiorazioneTurno - 180.00;
+  const tasse = totaleLordo * 0.375;
+  const stipendioNetto = totaleLordo - tasse;
 
   document.getElementById('statsContent').innerHTML = `
     ☀️ Mattine: <b>${stats.MATTINA}</b><br>
@@ -359,6 +380,13 @@ function showStats() {
     🏢 Presenza in Sede: <b>${stats.SEDE}</b><br>
     🏠 Smart Working: <b>${stats.SMART}</b><br>
     🏖️ Ferie Effettuate: <b>${stats.FERIE}</b>
+    <hr style="border:0; border-top:1px solid var(--border-color); margin: 12px 0;">
+    💰 <b>Previsione Stipendio (Netto):</b><br>
+    <span style="font-size:11px; color:gray; line-height: 1.2; display:block; margin-bottom:5px;">
+      Base: 3.745,20€ | Indennità: +${indennitaTurno.toFixed(2)}€<br>
+      Maggiorazione: +${maggiorazioneTurno.toFixed(2)}€ | Tasse (37.5%)
+    </span>
+    <span style="font-size:24px; font-weight:700; color:var(--primary);">€ ${stipendioNetto.toFixed(2).replace('.', ',')}</span>
   `;
   document.getElementById('statsOverlay').classList.add('active');
 }
