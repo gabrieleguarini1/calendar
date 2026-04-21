@@ -122,8 +122,8 @@
   .cell.selected { position: relative; }
   .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
 
-  /* Modal */
-  .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+  /* Modals */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 500; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
   .modal-bg.active { opacity: 1; visibility: visible; }
   .modal { background: var(--modal-bg); border-radius: 24px; padding: 24px; width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border-color); }
   .modal-bg.active .modal { transform: translateY(0); }
@@ -132,7 +132,7 @@
   .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
   .color-opt { height: 42px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); transition: transform 0.1s; }
   .color-opt:active { transform: scale(0.92); }
-  .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
+  .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; margin-top: 10px; }
 
   @media (max-width: 600px) {
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
@@ -169,6 +169,11 @@
   <div class="toolbar" id="mainToolbar">
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
+    
+    <button onclick="showStats()">📊 Stats</button>
+    <button onclick="shareWeek()">📤 Invia</button>
+    <button onclick="showWeather()">🌦️ Meteo</button>
+    
     <button class="dark-btn" onclick="toggleDarkMode()">🌓 Tema</button>
     <button onclick="location.reload()">🔄 Aggiorna</button>
     <button id="undoBtn" class="undo-btn" onclick="undo()">↩ Annulla</button>
@@ -177,6 +182,24 @@
   </div>
 
   <div class="cal-grid" id="calGrid"></div>
+
+  <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
+    <div class="modal">
+      <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 18px;">📊 Riepilogo Mese Corrente</h4>
+      <div id="statsContent" style="line-height:2.2; font-size:14px; font-weight:500;"></div>
+      <button class="btn-save" onclick="document.getElementById('statsOverlay').classList.remove('active')">CHIUDI</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="weatherOverlay" onclick="if(event.target.id==='weatherOverlay') this.classList.remove('active')">
+    <div class="modal">
+      <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 18px;">🌦️ Previsioni Meteo Locali</h4>
+      <div id="weatherContent" style="line-height:1.6; font-size:14px; text-align:left; max-height:300px; overflow-y:auto;">
+         <em>📍 Acquisizione posizione in corso... (Accetta la richiesta del browser)</em>
+      </div>
+      <button class="btn-save" onclick="document.getElementById('weatherOverlay').classList.remove('active')">CHIUDI</button>
+    </div>
+  </div>
 
   <div class="modal-bg" id="modal" onclick="if(event.target.id==='modal')cancelModal()">
     <div class="modal">
@@ -288,6 +311,151 @@ function undo() {
   }
 }
 window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
+
+// ==========================================
+// NUOVE FUNZIONI AGGIUNTE (STATS, SHARE, METEO)
+// ==========================================
+
+function showStats() {
+  const now = new Date();
+  const m = now.getMonth() + 1; // Mese corrente
+  const y = now.getFullYear();
+  let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0 };
+  
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  for (let d = 1; d <= daysInMonth; d++) {
+     const dow = new Date(y, m-1, d).getDay();
+     if (dow === 0 || dow === 6) continue; // Esclude sabato e domenica dal conteggio
+
+     const kTop = `${y}-${m}-${d}-top`;
+     const kBot = `${y}-${m}-${d}-bottom`;
+     
+     let topColor = db[kTop]?.color || 'none';
+     let botColor = db[kBot]?.color || 'none';
+     let text = (db[kBot]?.text || "").toLowerCase();
+
+     // Calcolo Mattina (Azzurro) o Pomeriggio (Arancio)
+     if (topColor === 'none') {
+         const autoHex = getAutoColor(y, m, d);
+         topColor = autoHex === '#D6EAF8' ? 'mattina' : 'pomeriggio';
+     }
+     if (topColor === 'mattina') stats.MATTINA++;
+     if (topColor === 'pomeriggio') stats.POMERIGGIO++;
+
+     // Calcolo Ferie, Smart Working (Rosso) o Sede (Bianco)
+     if (botColor === 'ferie' || text.includes('ferie')) {
+         stats.FERIE++;
+     } else if (botColor === 'smart' || text.includes('smart')) {
+         stats.SMART++;
+     } else if (botColor === 'none') {
+         stats.SEDE++; // Task Bianco = Presenza in sede
+     }
+  }
+
+  document.getElementById('statsContent').innerHTML = `
+    ☀️ Mattine: <b>${stats.MATTINA}</b><br>
+    🌙 Pomeriggi: <b>${stats.POMERIGGIO}</b><br>
+    🏢 Presenza in Sede: <b>${stats.SEDE}</b><br>
+    🏠 Smart Working: <b>${stats.SMART}</b><br>
+    🏖️ Ferie Effettuate: <b>${stats.FERIE}</b>
+  `;
+  document.getElementById('statsOverlay').classList.add('active');
+}
+
+function shareWeek() {
+  let msg = "📅 *I miei turni della settimana*:\n\n";
+  const today = new Date();
+  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+  const start = new Date(today);
+  start.setDate(today.getDate() - dayOfWeek + 1); // Torna indietro a Lunedì
+
+  const giorniNome = ["Lun", "Mar", "Mer", "Gio", "Ven"];
+  
+  for(let i=0; i<5; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    
+    const kTop = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-top`;
+    const kBot = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-bottom`;
+    
+    let topColor = db[kTop]?.color || 'none';
+    let botColor = db[kBot]?.color || 'none';
+    let text = (db[kBot]?.text || "").toLowerCase();
+    
+    // Calcolo Turno
+    if (topColor === 'none') {
+        const autoHex = getAutoColor(d.getFullYear(), d.getMonth()+1, d.getDate());
+        topColor = autoHex === '#D6EAF8' ? 'MATTINA' : 'POMERIGGIO';
+    } else {
+        topColor = topColor.toUpperCase();
+    }
+
+    // Calcolo Luogo (Se bianco è "IN SEDE")
+    let luogo = "IN SEDE";
+    if (botColor === 'smart' || text.includes('smart')) luogo = "SMART WORKING";
+    if (botColor === 'ferie' || text.includes('ferie')) luogo = "FERIE";
+
+    msg += `🔹 ${giorniNome[i]} ${d.getDate()}/${d.getMonth()+1}: *${topColor}* (${luogo})\n`;
+  }
+  window.open(`whatsapp://send?text=${encodeURIComponent(msg)}`);
+}
+
+function showWeather() {
+  const modal = document.getElementById('weatherOverlay');
+  const content = document.getElementById('weatherContent');
+  modal.classList.add('active');
+  content.innerHTML = "<em>📍 Ricerca posizione in corso... (Consenti l'accesso al GPS)</em>";
+
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
+        const data = await res.json();
+        
+        let html = "<div style='margin-bottom:15px;'><b>📍 Meteo Posizione Attuale</b></div>";
+        const giorni = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+        
+        for(let i=0; i<5; i++) {
+           const code = data.daily.weathercode[i];
+           const maxT = Math.round(data.daily.temperature_2m_max[i]);
+           const minT = Math.round(data.daily.temperature_2m_min[i]);
+           
+           let icon = "☀️";
+           if(code === 1 || code === 2) icon = "⛅";
+           else if(code === 3) icon = "☁️";
+           else if(code >= 45 && code <= 48) icon = "🌫️";
+           else if(code >= 51 && code <= 67) icon = "🌧️";
+           else if(code >= 71 && code <= 77) icon = "❄️";
+           else if(code >= 80 && code <= 82) icon = "🌦️";
+           else if(code >= 95) icon = "⛈️";
+
+           const d = new Date(data.daily.time[i]);
+           const dayName = i === 0 ? "Oggi" : i === 1 ? "Domani" : giorni[d.getDay()];
+
+           html += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding:10px 0;">
+             <span style="width:70px;"><b>${dayName}</b></span>
+             <span style="font-size:20px;">${icon}</span>
+             <span style="width:80px; text-align:right;">${minT}° / ${maxT}°</span>
+           </div>`;
+        }
+        content.innerHTML = html;
+      } catch(e) {
+        content.innerHTML = "<em>❌ Errore di connessione al servizio Meteo.</em>";
+      }
+    }, (error) => {
+       content.innerHTML = "<em>⚠️ Permesso posizione negato. Non posso caricare il meteo.</em>";
+    });
+  } else {
+    content.innerHTML = "<em>Geolocalizzazione non supportata.</em>";
+  }
+}
+
+// ==========================================
+// FUNZIONI ORIGINALI (NON TOCCATE)
+// ==========================================
 
 function setupPointerEvents() {
     const grid = document.getElementById('calGrid');
