@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Smart Calendar Premium</title>
+<title>Smart Calendar & Gym Premium</title>
 
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png" type="image/png">
@@ -41,6 +41,16 @@
     --weekend-text: #111827;
     --default-cell-bg: #ffffff;
     --default-text: #111827;
+
+    /* Variabili Gym (Adattate al tema scuro di default per la palestra) */
+    --gym-bg: #0a0a0a;
+    --gym-group-1: #151515;
+    --gym-group-2: #1e1e1e;
+    --gym-primary: #00e676;
+    --gym-text: #f0f0f0;
+    --gym-muted: #888888;
+    --gym-danger: #ff5252;
+    --gym-border: #333;
   }
 
   body.dark-mode {
@@ -83,19 +93,12 @@
   button:active { transform: scale(0.96); }
   button.undo-btn { background: #F59E0B; color: white; border: none; font-weight: 600; }
   button.today-btn { background: var(--primary); color: white; border: none; font-weight: 600; }
-  button.dark-btn { background: #374151; color: white; border: none; font-weight: 600; }
+  button.gym-btn { background: #0a0a0a; color: #00e676; border: 1px solid #00e676; font-weight: 700; }
   button.logout-btn { background: #E74C3C; color: white; border: none; font-weight: 600; }
-  body.dark-mode button.dark-btn { background: #F3F4F6; color: #111827; }
 
   /* Grid e Cards */
   .cal-grid { display: flex; flex-direction: column; gap: 35px; align-items: center; margin-top: 10px; }
-  
-  .month-block { 
-    background: var(--default-cell-bg); width: 100%; max-width: 900px; 
-    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); 
-    border: 1px solid var(--grid-border); scroll-margin-top: 80px;
-  }
-  
+  .month-block { background: var(--default-cell-bg); width: 100%; max-width: 900px; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--grid-border); scroll-margin-top: 80px; }
   .month-header { padding: 16px; font-size: 18px; font-weight: 600; text-align: center; color: var(--primary); background: var(--header-bg); border-bottom: 1px solid var(--grid-border); transition: background 0.3s; }
   .days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--primary); border-bottom: 1px solid var(--grid-border); }
   .day-name { text-align: center; font-size: 11px; font-weight: 600; color: white; padding: 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -106,23 +109,19 @@
   .week-row .cell:last-child, .note-row .cell:last-child { border-right: none; }
   .cell.empty { background: var(--empty-bg) !important; cursor: default; transition: background 0.3s; }
 
-  /* Giorno */
   .day-cell { height: 38px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
   .day-num { font-weight: 600; font-size: 17px; } 
 
-  /* Note */
   .note-cell { height: 95px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
   .note-cell::-webkit-scrollbar { width: 4px; }
   .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
   
-  /* Ring OGGI */
   .today-ring { position: relative; }
   .today-ring::after { content: ''; position: absolute; inset: -1px; border: 3px solid var(--primary); border-radius: 4px; pointer-events: none; z-index: 10; }
-  
   .cell.selected { position: relative; }
   .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
 
-  /* Modal */
+  /* Modal Base */
   .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
   .modal-bg.active { opacity: 1; visibility: visible; }
   .modal { background: var(--modal-bg); border-radius: 24px; padding: 24px; width: 350px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: translateY(20px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border-color); }
@@ -133,6 +132,67 @@
   .color-opt { height: 42px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); transition: transform 0.1s; }
   .color-opt:active { transform: scale(0.92); }
   .btn-save { width: 100%; background: var(--primary); color: white; padding: 14px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
+
+  /* -------------------
+     MODULO GYM (Overlay)
+     ------------------- */
+  #gymOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--gym-bg); color: var(--gym-text);
+    z-index: 3000; overflow-y: auto; padding-bottom: 120px;
+    display: none; flex-direction: column;
+  }
+  #gymOverlay.active { display: flex; }
+  
+  .gym-header { background-color: var(--gym-group-1); padding: 15px 10px; text-align: center; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--gym-border); display: flex; flex-direction: column; gap: 10px; }
+  .gym-title-row { display: flex; justify-content: space-between; align-items: center; }
+  .gym-header h1 { font-size: 1.2rem; color: var(--gym-primary); margin: 0; }
+  .close-gym-btn { background: var(--gym-danger); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+  
+  .gym-tabs { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+  .gym-tab-btn { background: transparent; color: var(--gym-muted); border: 1px solid var(--gym-border); padding: 6px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+  .gym-tab-btn.active { background-color: var(--gym-primary); color: var(--gym-bg); border-color: var(--gym-primary); font-weight: bold; }
+
+  .gym-container { padding: 10px; max-width: 600px; margin: 0 auto; width: 100%; }
+  .gym-day-content { display: none; }
+  .gym-day-content.active { display: block; animation: fade 0.2s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .gym-exercise-group { border-radius: 8px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--gym-border); border-left: 4px solid var(--gym-muted); }
+  .gym-exercise-group:nth-child(odd) { background-color: var(--gym-group-1); }
+  .gym-exercise-group:nth-child(even) { background-color: var(--gym-group-2); }
+  .gym-group-header { font-size: 0.7rem; text-transform: uppercase; padding: 2px 8px; background: rgba(0,0,0,0.3); color: var(--gym-muted); text-align: right; border-bottom: 1px solid var(--gym-border); }
+
+  .gym-exercise-item { display: flex; align-items: center; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: opacity 0.3s; }
+  .gym-exercise-item:last-child { border-bottom: none; }
+  .gym-exercise-item.done { opacity: 0.4; }
+  .gym-exercise-item.done .gym-ex-name { text-decoration: line-through; }
+
+  .gym-checkbox-wrapper { margin-right: 10px; }
+  .gym-checkbox-wrapper input { display: none; }
+  .gym-checkbox-wrapper label { width: 24px; height: 24px; border: 2px solid var(--gym-muted); border-radius: 6px; display: inline-block; cursor: pointer; position: relative; }
+  .gym-checkbox-wrapper input:checked + label { background-color: var(--gym-primary); border-color: var(--gym-primary); }
+  .gym-checkbox-wrapper input:checked + label::after { content: '✓'; position: absolute; color: var(--gym-bg); font-weight: bold; font-size: 16px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  .gym-ex-info { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+  .gym-ex-name { font-weight: 600; font-size: 1rem; color: #fff; }
+  .gym-ex-stats { display: flex; gap: 10px; font-size: 0.8rem; }
+  .gym-ex-stats > span { color: var(--gym-muted); }
+
+  .gym-container [contenteditable="true"] { border-bottom: 1px dashed var(--gym-muted); outline: none; min-width: 15px; display: inline-block; transition: all 0.2s; color: var(--gym-text); }
+  .gym-container [contenteditable="true"]:focus { border-bottom-color: var(--gym-primary); color: var(--gym-primary); background: rgba(0, 230, 118, 0.1); border-radius: 2px; }
+
+  .gym-finish-btn { background: var(--gym-primary); color: var(--gym-bg); border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;}
+
+  /* Timer Settings */
+  .gym-timer-container { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--gym-group-1); padding: 12px 10px; border-top: 1px solid var(--gym-border); display: flex; align-items: center; justify-content: space-between; z-index: 3100; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);}
+  .gym-timer-display { font-size: 1.8rem; font-weight: bold; font-variant-numeric: tabular-nums; width: 80px; text-align: center; color: var(--gym-text);}
+  .gym-timer-display.finished { color: var(--gym-danger); animation: gym-blink 1s infinite; }
+  @keyframes gym-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  .gym-timer-controls { display: flex; gap: 6px; flex-grow: 1; justify-content: flex-end; }
+  .gym-timer-btn { padding: 10px 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; background-color: #333; color: white; min-width: 45px; }
+  .gym-timer-btn.preset { background-color: #2c3e50; }
+  .gym-timer-btn.stop { background-color: var(--gym-danger); }
 
   @media (max-width: 600px) {
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
@@ -170,6 +230,7 @@
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
     <button class="today-btn" style="background: var(--primary); color: white;" onclick="showStats()">📊 Riepilogo</button>
+    <button class="gym-btn" onclick="openGymOverlay()">🏋️ GYM</button>
     <button onclick="location.reload()" title="Aggiorna">🔄</button>
     <button class="undo-btn" onclick="undo()" title="Torna indietro">↩️</button>
     <button class="logout-btn" onclick="logout()">Esci</button>
@@ -180,15 +241,12 @@
   <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
     <div class="modal">
       <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 16px;">📋 Riepilogo e Strumenti</h4>
-      
       <div id="statsContent" style="line-height:1.6; font-size:12px; font-weight:500; margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
-      
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
           <button class="btn-save" style="margin-top:0; background: #25D366; font-size: 11px; padding: 10px;" onclick="shareWeek()">📤 Invia</button>
           <button class="btn-save" style="margin-top:0; background: #3498DB; font-size: 11px; padding: 10px;" onclick="showWeather()">🌦️ Meteo</button>
           <button class="btn-save" style="margin-top:0; background: #374151; font-size: 11px; padding: 10px;" onclick="toggleDarkMode()">🌓 Tema</button>
       </div>
-
       <button class="btn-save" style="background: #E74C3C; padding: 10px; margin-top: 5px;" onclick="document.getElementById('statsOverlay').classList.remove('active')">CHIUDI</button>
     </div>
   </div>
@@ -211,6 +269,39 @@
       <button class="btn-save" onclick="saveAndCloseModal()">FATTO</button>
     </div>
   </div>
+</div>
+
+<div id="gymOverlay">
+    <div class="gym-header">
+        <div class="gym-title-row">
+            <h1>Workout Slim</h1>
+            <button class="close-gym-btn" onclick="closeGymOverlay()">Chiudi ✖</button>
+        </div>
+        <div class="gym-tabs">
+            <button class="gym-tab-btn active" onclick="switchGymTab('day1')">DAY 1</button>
+            <button class="gym-tab-btn" onclick="switchGymTab('day2')">DAY 2</button>
+            <button class="gym-tab-btn" onclick="switchGymTab('day3')">DAY 3</button>
+            <button class="gym-tab-btn" onclick="resetGymData()" style="border-color: #ff5252; color: #ff5252;">Reset</button>
+        </div>
+    </div>
+
+    <div class="gym-container">
+        <div id="gym-day1" class="gym-day-content active"></div>
+        <div id="gym-day2" class="gym-day-content"></div>
+        <div id="gym-day3" class="gym-day-content"></div>
+    </div>
+
+    <div class="gym-timer-container">
+        <div class="gym-timer-display" id="timeDisplay">00:00</div>
+        <div class="gym-timer-controls">
+            <button class="gym-timer-btn preset" onclick="startGymTimer(20)">20s</button>
+            <button class="gym-timer-btn preset" onclick="startGymTimer(30)">30s</button>
+            <button class="gym-timer-btn preset" onclick="startGymTimer(60)">60s</button>
+            <button class="gym-timer-btn preset" onclick="startGymTimer(90)">90s</button>
+            <button class="gym-timer-btn stop" onclick="stopGymTimer()">STOP</button>
+        </div>
+    </div>
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 </div>
 
 <script>
@@ -238,6 +329,13 @@ const database = firebase.database();
 
 let dbRef = null;
 let initialLoad = true;
+let db = {}; 
+let historyStack = []; 
+let currentYear = new Date().getFullYear();
+let selectedKeys = [];
+let isSelecting = false;
+let tempBulkColor = null;
+let tempBulkText = "";
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -247,7 +345,15 @@ auth.onAuthStateChanged(user => {
         dbRef = database.ref('calendario_dati');
         dbRef.on('value', (s) => {
           db = s.val() || {};
+          
+          // Inizializza Dati Palestra se non esistono nel DB
+          if(!db.gym_data) {
+              db.gym_data = gymDefaultData;
+          }
+          
           render();
+          initGymData(); // Aggiorna la vista palestra coi dati dal cloud
+          
           if (initialLoad) {
              setTimeout(scrollToToday, 300);
              initialLoad = false;
@@ -292,14 +398,6 @@ const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0'];
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
-let db = {}; 
-let historyStack = []; 
-let currentYear = new Date().getFullYear();
-let selectedKeys = [];
-let isSelecting = false;
-let tempBulkColor = null;
-let tempBulkText = "";
-
 function saveState() {
   historyStack.push(JSON.stringify(db));
   if(historyStack.length > 30) historyStack.shift();
@@ -310,19 +408,17 @@ function undo() {
     db = JSON.parse(historyStack.pop());
     pushToCloud();
     render(); 
+    initGymData();
   }
 }
 window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
 
-// ===============================================
-// FUNZIONI PREMIUM: STATS E STIPENDIO CON CENSURA
-// ===============================================
-
+// Riepilogo Stipendio
 function showStats() {
   const now = new Date();
-  const m = now.getMonth() + 1; // Mese corrente
+  const m = now.getMonth() + 1; 
   const y = now.getFullYear();
-  let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0 };
+  let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0, GYM: 0 };
   let giorniLavoroEffettivi = 0;
   let oreMaggiorazione = 0;
   
@@ -330,14 +426,17 @@ function showStats() {
 
   for (let d = 1; d <= daysInMonth; d++) {
      const dow = new Date(y, m-1, d).getDay();
-     if (dow === 0 || dow === 6) continue; // Esclude weekend
-
      const kTop = `${y}-${m}-${d}-top`;
      const kBot = `${y}-${m}-${d}-bottom`;
      
      let topColor = db[kTop]?.color || 'none';
      let botColor = db[kBot]?.color || 'none';
      let text = (db[kBot]?.text || "").toLowerCase();
+
+     // Conta Allenamenti
+     if (text.includes('🏋️')) stats.GYM++;
+
+     if (dow === 0 || dow === 6) continue; // Esclude weekend da turni
 
      if (topColor === 'none') {
          const autoHex = getAutoColor(y, m, d);
@@ -355,10 +454,9 @@ function showStats() {
      } else if (botColor === 'smart' || text.includes('smart')) {
          stats.SMART++;
      } else if (botColor === 'none' || botColor === 'vuoto' || !botColor) {
-         stats.SEDE++; // Task Bianco = In Sede
+         stats.SEDE++; 
      }
      
-     // Calcolo Stipendio
      if (!isFerie && !isFestivita) {
          giorniLavoroEffettivi++;
          if (topColor === 'mattina') oreMaggiorazione += 1.5;
@@ -379,6 +477,7 @@ function showStats() {
     <div style="display:flex; justify-content:space-between; color:var(--primary);"><span>🏢 In Sede:</span> <b>${stats.SEDE}</b></div>
     <div style="display:flex; justify-content:space-between; color:#E74C3C;"><span>🏠 Smart:</span> <b>${stats.SMART}</b></div>
     <div style="display:flex; justify-content:space-between; color:gray;"><span>🏖️ Ferie:</span> <b>${stats.FERIE}</b></div>
+    <div style="display:flex; justify-content:space-between; color:#27AE60;"><span>🏋️ Workout:</span> <b>${stats.GYM}</b></div>
     <hr style="border:0; border-top:1px solid var(--border-color); margin: 8px 0;">
     <div style="text-align:center;">
         💰 <b>Previsione Stipendio:</b><br>
@@ -392,7 +491,6 @@ function showStats() {
   document.getElementById('statsOverlay').classList.add('active');
 }
 
-// LOGICA NASCONDI STIPENDIO
 function toggleStipendio(btn) {
   const el = document.getElementById('stipendioAmount');
   if (el.innerText.includes('***')) {
@@ -440,7 +538,7 @@ function shareWeek() {
 }
 
 function showWeather() {
-  document.getElementById('statsOverlay').classList.remove('active'); // Chiude riepilogo
+  document.getElementById('statsOverlay').classList.remove('active'); 
   const modal = document.getElementById('weatherOverlay');
   const content = document.getElementById('weatherContent');
   modal.classList.add('active');
@@ -484,10 +582,7 @@ function showWeather() {
   } else { content.innerHTML = "<em>Geolocalizzazione non supportata.</em>"; }
 }
 
-// ===============================================
-// FUNZIONI ORIGINALI E GRIGLIA
-// ===============================================
-
+// Logica di selezione e salvataggio calendario
 function setupPointerEvents() {
     const grid = document.getElementById('calGrid');
     const getCell = (x, y) => document.elementFromPoint(x, y)?.closest('.cell:not(.empty)');
@@ -655,6 +750,187 @@ function scrollToToday() {
         window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   }, 250);
+}
+
+// ==========================================
+// LOGICA GYM INTEGRATA
+// ==========================================
+
+const gymDefaultData = {
+    day1: [
+        [{ id: "d1_0", name: "Corsa", reps: "5 Min", weight: "-", rest: "0 SEC" }],
+        [{ id: "d1_1", name: "Crunk Pallone 30SEC", reps: "12", weight: "-", rest: "-" }, { id: "d1_2", name: "Plank Laterale", reps: "12", weight: "-", rest: "30 SEC" }],
+        [{ id: "d1_3", name: "Panca Piana", reps: "10", weight: "50", rest: "-" }, { id: "d1_4", name: "Crunch Panca", reps: "20", weight: "-", rest: "-" }, { id: "d1_5", name: "Sumo Squat", reps: "15", weight: "20", rest: "0 SEC" }],
+        [{ id: "d1_6", name: "Corsa", reps: "3 MIN", weight: "-", rest: "0 SEC" }],
+        [{ id: "d1_7", name: "Squat 30SEC", reps: "12", weight: "55", rest: "-" }, { id: "d1_8", name: "Lento Avanti", reps: "12", weight: "10", rest: "-" }, { id: "d1_9", name: "Bicipiti", reps: "8", weight: "8", rest: "30 SEC" }],
+        [{ id: "d1_10", name: "Trazioni Strette", reps: "8", weight: "-", rest: "-" }, { id: "d1_11", name: "Trici Busto Flesso", reps: "12", weight: "6", rest: "-" }, { id: "d1_12", name: "Affondi Avati", reps: "20", weight: "10", rest: "0 SEC" }],
+        [{ id: "d1_13", name: "Stretc Gamba Flessa", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d1_14", name: "Lombare Supino", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d1_15", name: "Quadtrcipiti", reps: "30 SEC", weight: "-", rest: "0 SEC" }]
+    ],
+    day2: [
+        [{ id: "d2_0", name: "Corsa", reps: "5 Min", weight: "-", rest: "0 SEC" }],
+        [{ id: "d2_1", name: "Plank Pallone Braccia 30SEC", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d2_2", name: "Plank Pallone Laterale", reps: "40 SEC", weight: "-", rest: "30 SEC" }],
+        [{ id: "d2_3", name: "Bulgaro Panca", reps: "20", weight: "-", rest: "-" }, { id: "d2_4", name: "Alzate Laterali Seduto", reps: "12", weight: "-", rest: "-" }, { id: "d2_5", name: "Crunh Braccia Piedi", reps: "20", weight: "-", rest: "0 SEC" }],
+        [{ id: "d2_6", name: "Corsa", reps: "3 MIN", weight: "-", rest: "0 SEC" }],
+        [{ id: "d2_7", name: "Trazioni Large", reps: "10", weight: "-", rest: "-" }, { id: "d2_8", name: "Swing", reps: "15", weight: "-", rest: "-" }, { id: "d2_9", name: "Strechin Piedi", reps: "30 SEC", weight: "-", rest: "0 SEC" }],
+        [{ id: "d2_10", name: "Petto Inclinato 30 90 SEC", reps: "10", weight: "-", rest: "-" }, { id: "d2_11", name: "Croci Inverse 30", reps: "12", weight: "-", rest: "90 SEC" }],
+        [{ id: "d2_12", name: "Corsa", reps: "3 MIN", weight: "-", rest: "0 SEC" }],
+        [{ id: "d2_13", name: "Strech Gamba Flessa", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d2_14", name: "Lombare Supino", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d2_15", name: "Quadtrcipiti", reps: "30 SEC", weight: "-", rest: "0 SEC" }]
+    ],
+    day3: [
+        [{ id: "d3_0", name: "Corsa", reps: "5 Min", weight: "-", rest: "0 SEC" }],
+        [{ id: "d3_1", name: "Plank Piedi Pallone 30SEC", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d3_2", name: "Crunch Supino Pallone", reps: "12", weight: "-", rest: "30 SEC" }],
+        [{ id: "d3_3", name: "Bulgaro Su Panca", reps: "20", weight: "-", rest: "-" }, { id: "d3_4", name: "Alzate Laterali Seduto", reps: "12", weight: "-", rest: "-" }, { id: "d3_5", name: "Chrunch Tocca Tacco", reps: "15", weight: "-", rest: "0 SEC" }],
+        [{ id: "d3_6", name: "Corsa", reps: "3 MIN", weight: "-", rest: "0 SEC" }],
+        [{ id: "d3_7", name: "Rematore Triangolo", reps: "10", weight: "-", rest: "-" }, { id: "d3_8", name: "Mountain Climber", reps: "30 SEC", weight: "-", rest: "0 SEC" }],
+        [{ id: "d3_9", name: "Bicipiti Seduto", reps: "10", weight: "-", rest: "-" }, { id: "d3_10", name: "Bicipiti In Piedi", reps: "8", weight: "-", rest: "90 SEC" }],
+        [{ id: "d3_11", name: "Tricipiti Barra 30 SEC", reps: "10", weight: "-", rest: "-" }, { id: "d3_12", name: "Tricipiti Dietro Nuca", reps: "10", weight: "-", rest: "30 SEC" }],
+        [{ id: "d3_13", name: "Stretc Gamba Flessa", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d3_14", name: "Lombare Supino", reps: "30 SEC", weight: "-", rest: "-" }, { id: "d3_15", name: "Quadtrcipiti", reps: "30 SEC", weight: "-", rest: "0 SEC" }]
+    ]
+};
+
+function openGymOverlay() { document.getElementById('gymOverlay').classList.add('active'); }
+function closeGymOverlay() { document.getElementById('gymOverlay').classList.remove('active'); }
+
+function initGymData() {
+    renderGymDay('day1', 'gym-day1');
+    renderGymDay('day2', 'gym-day2');
+    renderGymDay('day3', 'gym-day3');
+}
+
+function saveGymDatiToCloud() {
+    saveState();
+    pushToCloud();
+}
+
+function resetGymData() {
+    if(confirm("Vuoi ripristinare la scheda ai valori originali?")) {
+        db.gym_data = JSON.parse(JSON.stringify(gymDefaultData));
+        saveGymDatiToCloud();
+        initGymData();
+    }
+}
+
+function updateGymField(dayId, groupIndex, exIndex, field, element) {
+    db.gym_data[dayId][groupIndex][exIndex][field] = element.innerText;
+    saveGymDatiToCloud();
+}
+
+function toggleGymDone(itemId) {
+    document.getElementById(itemId).classList.toggle('done');
+}
+
+function completaAllenamentoOggi(dayLabel) {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth() + 1;
+    const d = today.getDate();
+    const kBot = `${y}-${m}-${d}-bottom`;
+
+    if (!db[kBot]) { db[kBot] = { color: 'none', text: '' }; }
+    
+    // Controlla se c'è già l'emoji, altrimenti l'aggiunge
+    if (!db[kBot].text.includes('🏋️')) {
+        let nota = `🏋️ Allenamento Fatto (${dayLabel})`;
+        db[kBot].text = db[kBot].text ? db[kBot].text + '\n' + nota : nota;
+        pushToCloud();
+        render(); // aggiorna il calendario sotto
+        alert("Grandi! Allenamento salvato nel calendario di oggi!");
+        closeGymOverlay();
+        
+        // Reset delle spunte
+        document.querySelectorAll('.gym-exercise-item.done').forEach(el => el.classList.remove('done'));
+        document.querySelectorAll('.gym-checkbox-wrapper input').forEach(el => el.checked = false);
+    } else {
+        alert("Hai già un allenamento segnato per oggi!");
+    }
+}
+
+function renderGymDay(dayId, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if(!db.gym_data || !db.gym_data[dayId]) return;
+
+    db.gym_data[dayId].forEach((group, gIndex) => {
+        let groupHtml = `<div class="gym-exercise-group">`;
+        
+        if(group.length > 1) {
+            const groupType = group.length === 2 ? 'Superserie' : (group.length === 3 ? 'Triserie' : 'Circuito');
+            groupHtml += `<div class="gym-group-header">${groupType}</div>`;
+        }
+
+        group.forEach((ex, eIndex) => {
+            const restVal = ex.rest || "-"; 
+            groupHtml += `
+                <div class="gym-exercise-item" id="gym-item-${ex.id}">
+                    <div class="gym-checkbox-wrapper">
+                        <input type="checkbox" id="gym-chk-${ex.id}" onchange="toggleGymDone('gym-item-${ex.id}')">
+                        <label for="gym-chk-${ex.id}"></label>
+                    </div>
+                    <div class="gym-ex-info">
+                        <div class="gym-ex-name" contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'name', this)">${ex.name}</div>
+                        <div class="gym-ex-stats">
+                            <span>Rip: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'reps', this)">${ex.reps}</span></span>
+                            <span>Kg: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'weight', this)">${ex.weight}</span></span>
+                            <span>Rec: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'rest', this)">${restVal}</span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        groupHtml += `</div>`;
+        container.innerHTML += groupHtml;
+    });
+
+    // Aggiungo il bottone di fine allenamento alla fine di ogni giorno
+    const label = dayId.toUpperCase();
+    container.innerHTML += `<button class="gym-finish-btn" onclick="completaAllenamentoOggi('${label}')">🏁 Segna Workout come Fatto Oggi</button>`;
+}
+
+function switchGymTab(tabId) {
+    document.querySelectorAll('.gym-day-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.gym-tab-btn').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById('gym-' + tabId).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// Timer Palestra
+let gymTimerInterval;
+let gymTimeLeft = 0;
+const gymDisplay = document.getElementById('timeDisplay');
+const gymBeepSound = document.getElementById('beepSound');
+
+function updateGymDisplay(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    gymDisplay.innerText = `${m}:${s}`;
+}
+
+function startGymTimer(seconds) {
+    clearInterval(gymTimerInterval);
+    gymDisplay.classList.remove('finished');
+    gymTimeLeft = seconds;
+    updateGymDisplay(gymTimeLeft);
+    
+    gymTimerInterval = setInterval(() => {
+        gymTimeLeft--;
+        updateGymDisplay(gymTimeLeft);
+        
+        if (gymTimeLeft <= 0) {
+            clearInterval(gymTimerInterval);
+            gymDisplay.classList.add('finished');
+            gymDisplay.innerText = "FINE";
+            gymBeepSound.play().catch(e => console.log("Audio bloccato dal browser"));
+        }
+    }, 1000);
+}
+
+function stopGymTimer() {
+    clearInterval(gymTimerInterval);
+    gymTimeLeft = 0;
+    updateGymDisplay(0);
+    gymDisplay.classList.remove('finished');
 }
 </script>
 </body>
