@@ -830,7 +830,7 @@ function completaAllenamentoOggi(dayLabel) {
     
     // Controlla se c'è già l'emoji, altrimenti l'aggiunge
     if (!db[kBot].text.includes('🏋️')) {
-        let nota = `🏋️ Allenamento Fatto (${dayLabel})`;
+        let nota = `🏋️ (${dayLabel})`;
         db[kBot].text = db[kBot].text ? db[kBot].text + '\n' + nota : nota;
         pushToCloud();
         render(); // aggiorna il calendario sotto
