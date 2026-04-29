@@ -59,13 +59,13 @@
     --card-bg: #1F2937;
     --text-main: #E5E7EB;
     --border-color: #4B5563; 
-    --grid-border: #4B5563; 
+    --grid-border: #4B5563;
     --modal-bg: #1F2937;
     --toolbar-bg: rgba(31, 41, 55, 0.85);
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
 
     --header-bg: #000000; 
-    --empty-bg: #000000; 
+    --empty-bg: #000000;
     --weekend-bg: #000000; 
     --weekend-text: #ffffff; 
     --default-cell-bg: #ffffff; 
@@ -323,7 +323,6 @@ const firebaseConfig = {
   appId: "1:1027818141525:web:b409cbe6c524d532a1a1dc",
   databaseURL: "https://calendariosmart-4ae27-default-rtdb.europe-west1.firebasedatabase.app/"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
@@ -349,7 +348,7 @@ auth.onAuthStateChanged(user => {
           
           // Inizializza Dati Palestra se non esistono nel DB
           if(!db.gym_data) {
-              db.gym_data = gymDefaultData;
+             db.gym_data = gymDefaultData;
           }
           
           render();
@@ -395,7 +394,7 @@ const COLORS = [
 ];
 
 const darkBgColors = ['#E74C3C', '#566573', '#3498DB', '#9B59B6'];
-const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0']; 
+const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0'];
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
@@ -417,14 +416,13 @@ window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.ke
 // Riepilogo Stipendio
 function showStats() {
   const now = new Date();
-  const m = now.getMonth() + 1; 
+  const m = now.getMonth() + 1;
   const y = now.getFullYear();
   let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0, GYM: 0 };
   let giorniLavoroEffettivi = 0;
   let oreMaggiorazione = 0;
   
   const daysInMonth = new Date(y, m, 0).getDate();
-
   for (let d = 1; d <= daysInMonth; d++) {
      const dow = new Date(y, m-1, d).getDay();
      const kTop = `${y}-${m}-${d}-top`;
@@ -436,7 +434,6 @@ function showStats() {
 
      // Conta Allenamenti
      if (text.includes('🏋️')) stats.GYM++;
-
      if (dow === 0 || dow === 6) continue; // Esclude weekend da turni
 
      if (topColor === 'none') {
@@ -455,7 +452,7 @@ function showStats() {
      } else if (botColor === 'smart' || text.includes('smart')) {
          stats.SMART++;
      } else if (botColor === 'none' || botColor === 'vuoto' || !botColor) {
-         stats.SEDE++; 
+         stats.SEDE++;
      }
      
      if (!isFerie && !isFestivita) {
@@ -517,7 +514,6 @@ function shareWeek() {
     d.setDate(start.getDate() + i);
     const kTop = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-top`;
     const kBot = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}-bottom`;
-    
     let topColor = db[kTop]?.color || 'none';
     let botColor = db[kBot]?.color || 'none';
     let text = (db[kBot]?.text || "").toLowerCase();
@@ -555,6 +551,7 @@ function showWeather() {
         
         let html = "";
         const giorni = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+        
         for(let i=0; i<5; i++) {
            const code = data.daily.weathercode[i];
            const maxT = Math.round(data.daily.temperature_2m_max[i]);
@@ -567,7 +564,7 @@ function showWeather() {
            else if(code >= 71 && code <= 77) icon = "❄️";
            else if(code >= 80 && code <= 82) icon = "🌦️";
            else if(code >= 95) icon = "⛈️";
-
+           
            const d = new Date(data.daily.time[i]);
            const dayName = i === 0 ? "Oggi" : i === 1 ? "Domani" : giorni[d.getDay()];
 
@@ -647,7 +644,7 @@ function selectBulkColor(id, event) {
 function saveAndCloseModal() {
   const currentTxt = document.getElementById('modalText').value.trim();
   tempBulkText = currentTxt;
-  saveState(); 
+  saveState();
   selectedKeys.forEach(k => {
     db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
     if(db[k].color === 'none' && db[k].text === '') delete db[k];
@@ -670,7 +667,7 @@ function getAutoColor(y, m, d) {
   const dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
   const mon = new Date(dt); mon.setDate(dt.getDate() - dow);
   const wk = Math.round((mon - REF_DATE) / (1000*60*60*24*7));
-  return wk % 2 === 0 ? '#D6EAF8' : '#F5CBA7'; 
+  return wk % 2 === 0 ? '#D6EAF8' : '#F5CBA7';
 }
 
 function render() {
@@ -737,7 +734,6 @@ const s = document.getElementById('yearSel');
 for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
-
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
@@ -826,7 +822,6 @@ function completaAllenamentoOggi(dayLabel) {
     const m = today.getMonth() + 1;
     const d = today.getDate();
     const kBot = `${y}-${m}-${d}-bottom`;
-
     if (!db[kBot]) { db[kBot] = { color: 'none', text: '' }; }
     
     // Controlla se c'è già l'emoji, altrimenti l'aggiunge
@@ -834,10 +829,10 @@ function completaAllenamentoOggi(dayLabel) {
         let nota = `🏋️ (${dayLabel})`;
         db[kBot].text = db[kBot].text ? db[kBot].text + '\n' + nota : nota;
         pushToCloud();
-        render(); // aggiorna il calendario sotto
+        render();
+        // aggiorna il calendario sotto
         alert("Grandi! Allenamento salvato nel calendario di oggi!");
         closeGymOverlay();
-        
         // Reset delle spunte
         document.querySelectorAll('.gym-exercise-item.done').forEach(el => el.classList.remove('done'));
         document.querySelectorAll('.gym-checkbox-wrapper input').forEach(el => el.checked = false);
@@ -851,7 +846,6 @@ function renderGymDay(dayId, containerId) {
     container.innerHTML = '';
 
     if(!db.gym_data || !db.gym_data[dayId]) return;
-
     db.gym_data[dayId].forEach((group, gIndex) => {
         let groupHtml = `<div class="gym-exercise-group">`;
         
@@ -896,13 +890,25 @@ function switchGymTab(tabId) {
     event.target.classList.add('active');
 }
 
-// Timer Palestra
+// ==========================================
+// TIMER PALESTRA (Background & 5 Squilli)
+// ==========================================
 let gymTimerInterval;
-let gymTimeLeft = 0;
+let gymEndTime = 0; // Memorizza l'ora esatta in cui deve finire
 const gymDisplay = document.getElementById('timeDisplay');
 const gymBeepSound = document.getElementById('beepSound');
 
+// 1. Gestione dei 5 squilli
+let beepCount = 0;
+gymBeepSound.addEventListener('ended', () => {
+    beepCount++;
+    if (beepCount < 5) { // Quante volte deve suonare (in totale 5)
+        gymBeepSound.play().catch(e => console.log("Audio bloccato", e));
+    }
+});
+
 function updateGymDisplay(seconds) {
+    if (seconds < 0) seconds = 0;
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
     gymDisplay.innerText = `${m}:${s}`;
@@ -911,27 +917,50 @@ function updateGymDisplay(seconds) {
 function startGymTimer(seconds) {
     clearInterval(gymTimerInterval);
     gymDisplay.classList.remove('finished');
-    gymTimeLeft = seconds;
-    updateGymDisplay(gymTimeLeft);
+
+    // 2. TRUCCO AUDIO: Sblocca i permessi del browser al tocco
+    gymBeepSound.volume = 0; // Mettiamo muto
+    gymBeepSound.play().then(() => {
+        gymBeepSound.pause();
+        gymBeepSound.currentTime = 0;
+        gymBeepSound.volume = 1; // Riportiamo il volume al massimo per dopo
+    }).catch(e => console.log("Unlock audio fallito", e));
+
+    // 3. Calcolo del tempo assoluto
+    // Salviamo l'orario di sistema attuale + i secondi scelti
+    gymEndTime = Date.now() + (seconds * 1000);
+    updateGymDisplay(seconds);
     
+    // Controlliamo l'orologio ogni 250ms (invece di 1 secondo, per essere più reattivi se riapri l'app)
     gymTimerInterval = setInterval(() => {
-        gymTimeLeft--;
-        updateGymDisplay(gymTimeLeft);
+        // Calcola i secondi rimanenti veri rispetto all'orologio del telefono
+        let gymTimeLeft = Math.ceil((gymEndTime - Date.now()) / 1000);
         
         if (gymTimeLeft <= 0) {
             clearInterval(gymTimerInterval);
+            updateGymDisplay(0);
             gymDisplay.classList.add('finished');
             gymDisplay.innerText = "FINE";
-            gymBeepSound.play().catch(e => console.log("Audio bloccato dal browser"));
+            
+            // Fai partire l'allarme! Il listener "ended" si occuperà di ripeterlo 5 volte
+            beepCount = 0; // Resetta il contatore
+            gymBeepSound.currentTime = 0;
+            gymBeepSound.play().catch(e => console.log("Audio bloccato dal browser", e));
+        } else {
+            updateGymDisplay(gymTimeLeft);
         }
-    }, 1000);
+    }, 250); 
 }
 
 function stopGymTimer() {
     clearInterval(gymTimerInterval);
-    gymTimeLeft = 0;
     updateGymDisplay(0);
     gymDisplay.classList.remove('finished');
+    
+    // Ferma l'allarme se lo stoppi mentre sta suonando
+    gymBeepSound.pause();
+    gymBeepSound.currentTime = 0;
+    beepCount = 5; // Blocca il loop dei 5 squilli
 }
 </script>
 </body>
