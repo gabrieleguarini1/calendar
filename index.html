@@ -631,13 +631,31 @@ function renderColors() {
 
 function selectBulkColor(id, event) {
   event.stopPropagation();
+  
+  // Aggiorna tempBulkText con quello che c'è attualmente nella casella di testo
+  // (utile per non perdere ciò che potresti aver scritto a mano prima di cliccare)
+  tempBulkText = document.getElementById('modalText').value;
+  
   const colorObj = COLORS.find(c => c.id === id);
+  
   if (!colorObj.isAdd) tempBulkColor = id;
-  if (id === 'none') { tempBulkText = ''; document.getElementById('modalText').value = ''; } 
-  else if (colorObj.autoText) {
-      tempBulkText = colorObj.isAdd ? (tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText) : colorObj.autoText;
+  
+  if (id === 'none') { 
+      tempBulkText = ''; 
+      document.getElementById('modalText').value = ''; 
+  } else if (colorObj.autoText) {
+      if (colorObj.isAdd) {
+          // CONTROLLO: Se il testo NON contiene già la stringa (es. "🚂 8.52"), allora la aggiunge
+          if (!tempBulkText.includes(colorObj.autoText)) {
+              tempBulkText = tempBulkText ? tempBulkText + "\n" + colorObj.autoText : colorObj.autoText;
+          }
+      } else {
+          // Se non è un tasto additivo, sostituisce il testo
+          tempBulkText = colorObj.autoText;
+      }
       document.getElementById('modalText').value = tempBulkText;
   }
+  
   renderColors();
 }
 
