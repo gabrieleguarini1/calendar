@@ -8,14 +8,16 @@
   "theme_color": "#7C3AED",
   "icons": [
     {
-      "src": "https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
