@@ -6,8 +6,9 @@
 <title>Smart Calendar & Gym Premium</title>
 
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png" type="image/png">
-<link rel="apple-touch-icon" href="https://png.pngtree.com/png-clipart/20240629/original/pngtree-google-calendar-calendar-icon-vector-png-image_15443322.png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<!-- apple-touch-icon richiede un PNG raster: sostituire con icons/icon-180.png quando disponibile -->
+<link rel="apple-touch-icon" href="icons/icon.svg">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -194,6 +195,18 @@
   .gym-timer-btn.preset { background-color: #2c3e50; }
   .gym-timer-btn.stop { background-color: var(--gym-danger); }
 
+  /* Toast di stato salvataggio */
+  #saveToast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #111827; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); z-index: 500; opacity: 0; pointer-events: none; transition: all 0.25s ease; }
+  #saveToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #saveToast.error { background: #E74C3C; }
+
+  /* Legenda colori */
+  #legendBox { max-width: 900px; margin: 0 auto 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 12px; font-size: 12px; }
+  #legendBox summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+  #legendContent { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .legend-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; }
+
   @media (max-width: 600px) {
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
     .toolbar { padding: 6px; gap: 4px; }
@@ -236,7 +249,13 @@
     <button class="logout-btn" onclick="logout()">Esci</button>
   </div>
 
+  <details id="legendBox">
+    <summary>🎨 Legenda colori</summary>
+    <div id="legendContent"></div>
+  </details>
+
   <div class="cal-grid" id="calGrid"></div>
+  <div id="saveToast"></div>
 
   <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
     <div class="modal">
@@ -278,9 +297,9 @@
             <button class="close-gym-btn" onclick="closeGymOverlay()">Chiudi ✖</button>
         </div>
         <div class="gym-tabs">
-            <button class="gym-tab-btn active" onclick="switchGymTab('day1')">DAY 1</button>
-            <button class="gym-tab-btn" onclick="switchGymTab('day2')">DAY 2</button>
-            <button class="gym-tab-btn" onclick="switchGymTab('day3')">DAY 3</button>
+            <button class="gym-tab-btn active" onclick="switchGymTab('day1', event)">DAY 1</button>
+            <button class="gym-tab-btn" onclick="switchGymTab('day2', event)">DAY 2</button>
+            <button class="gym-tab-btn" onclick="switchGymTab('day3', event)">DAY 3</button>
             <button onclick="location.reload()" title="Aggiorna">🔄</button>
             <button class="gym-tab-btn" onclick="resetGymData()" style="border-color: #ff5252; color: #ff5252;">Reset</button>
         </div>
@@ -346,11 +365,12 @@ auth.onAuthStateChanged(user => {
         dbRef.on('value', (s) => {
           db = s.val() || {};
           
-          // Inizializza Dati Palestra se non esistono nel DB
+          // Inizializza Dati Palestra se non esistono nel DB (scritta solo la prima volta)
           if(!db.gym_data) {
              db.gym_data = gymDefaultData;
+             dbRef.child('gym_data').set(gymDefaultData);
           }
-          
+
           render();
           initGymData(); // Aggiorna la vista palestra coi dati dal cloud
           
@@ -398,20 +418,70 @@ const lightBgColors = ['#D6EAF8', '#F5CBA7', '#ffffff', '#A7F3D0'];
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let toastTimeout;
+function showToast(msg, isError) {
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function renderLegend() {
+  document.getElementById('legendContent').innerHTML = COLORS
+    .filter(c => c.hex !== 'none')
+    .map(c => `<span class="legend-chip"><span class="legend-dot" style="background:${c.hex}"></span>${c.label}</span>`)
+    .join('');
+}
+renderLegend();
+
+function diffForPatch(before, after) {
+  const patch = {};
+  const allKeys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  allKeys.forEach(k => {
+    const b = JSON.stringify(before[k] ?? null);
+    const a = JSON.stringify(after[k] ?? null);
+    if (b !== a) patch[k] = (after[k] === undefined) ? null : after[k];
+  });
+  return patch;
+}
+
+function pushPatch(patch) {
+  if (!auth.currentUser || !patch || Object.keys(patch).length === 0) return;
+  dbRef.update(patch)
+    .then(() => showToast('Salvato ✅'))
+    .catch(err => { console.error('Errore salvataggio Firebase', err); showToast('⚠️ Errore salvataggio', true); });
+}
+
 function saveState() {
   historyStack.push(JSON.stringify(db));
   if(historyStack.length > 30) historyStack.shift();
 }
-function pushToCloud() { if(auth.currentUser) dbRef.set(db); }
 function undo() {
   if(historyStack.length > 0) {
-    db = JSON.parse(historyStack.pop());
-    pushToCloud();
-    render(); 
+    const before = db;
+    const after = JSON.parse(historyStack.pop());
+    const patch = diffForPatch(before, after);
+    db = after;
+    pushPatch(patch);
+    render();
     initGymData();
   }
 }
-window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } });
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    const el = document.activeElement;
+    const isEditingText = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    if (isEditingText) return; // lascia l'undo nativo dentro campi di testo
+    e.preventDefault();
+    undo();
+  }
+});
 
 // Riepilogo Stipendio
 function showStats() {
@@ -531,7 +601,9 @@ function shareWeek() {
 
     msg += `🔹 ${giorniNome[i]} ${d.getDate()}/${d.getMonth()+1}: *${topColor}* (${luogo})\n`;
   }
-  window.open(`whatsapp://send?text=${encodeURIComponent(msg)}`);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const waUrl = isMobile ? `whatsapp://send?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
 }
 
 function showWeather() {
@@ -663,11 +735,18 @@ function saveAndCloseModal() {
   const currentTxt = document.getElementById('modalText').value.trim();
   tempBulkText = currentTxt;
   saveState();
+  const patch = {};
   selectedKeys.forEach(k => {
-    db[k] = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
-    if(db[k].color === 'none' && db[k].text === '') delete db[k];
+    const newVal = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
+    if (newVal.color === 'none' && newVal.text === '') {
+      delete db[k];
+      patch[k] = null;
+    } else {
+      db[k] = newVal;
+      patch[k] = newVal;
+    }
   });
-  pushToCloud();
+  pushPatch(patch);
   document.getElementById('modal').classList.remove('active');
   document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
   selectedKeys = [];
@@ -738,7 +817,7 @@ function render() {
           let textCol = (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
           const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
-          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${l}</span></div>`).join('');
+          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${escapeHtml(l)}</span></div>`).join('');
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
@@ -812,22 +891,24 @@ function initGymData() {
     renderGymDay('day3', 'gym-day3');
 }
 
-function saveGymDatiToCloud() {
-    saveState();
-    pushToCloud();
-}
-
 function resetGymData() {
     if(confirm("Vuoi ripristinare la scheda ai valori originali?")) {
+        saveState();
         db.gym_data = JSON.parse(JSON.stringify(gymDefaultData));
-        saveGymDatiToCloud();
+        dbRef.child('gym_data').set(db.gym_data)
+          .then(() => showToast('Scheda ripristinata ✅'))
+          .catch(() => showToast('⚠️ Errore salvataggio', true));
         initGymData();
     }
 }
 
 function updateGymField(dayId, groupIndex, exIndex, field, element) {
-    db.gym_data[dayId][groupIndex][exIndex][field] = element.innerText;
-    saveGymDatiToCloud();
+    const value = element.innerText;
+    saveState();
+    db.gym_data[dayId][groupIndex][exIndex][field] = value;
+    dbRef.child(`gym_data/${dayId}/${groupIndex}/${exIndex}/${field}`).set(value)
+      .then(() => showToast('Salvato ✅'))
+      .catch(() => showToast('⚠️ Errore salvataggio', true));
 }
 
 function toggleGymDone(itemId) {
@@ -846,7 +927,7 @@ function completaAllenamentoOggi(dayLabel) {
     if (!db[kBot].text.includes('🏋️')) {
         let nota = `🏋️ (${dayLabel})`;
         db[kBot].text = db[kBot].text ? db[kBot].text + '\n' + nota : nota;
-        pushToCloud();
+        dbRef.child(kBot).set(db[kBot]).catch(() => showToast('⚠️ Errore salvataggio', true));
         render();
         // aggiorna il calendario sotto
         alert("Grandi! Allenamento salvato nel calendario di oggi!");
@@ -881,11 +962,11 @@ function renderGymDay(dayId, containerId) {
                         <label for="gym-chk-${ex.id}"></label>
                     </div>
                     <div class="gym-ex-info">
-                        <div class="gym-ex-name" contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'name', this)">${ex.name}</div>
+                        <div class="gym-ex-name" contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'name', this)">${escapeHtml(ex.name)}</div>
                         <div class="gym-ex-stats">
-                            <span>Rip: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'reps', this)">${ex.reps}</span></span>
-                            <span>Kg: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'weight', this)">${ex.weight}</span></span>
-                            <span>Rec: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'rest', this)">${restVal}</span></span>
+                            <span>Rip: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'reps', this)">${escapeHtml(ex.reps)}</span></span>
+                            <span>Kg: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'weight', this)">${escapeHtml(ex.weight)}</span></span>
+                            <span>Rec: <span contenteditable="true" onblur="updateGymField('${dayId}', ${gIndex}, ${eIndex}, 'rest', this)">${escapeHtml(restVal)}</span></span>
                         </div>
                     </div>
                 </div>
@@ -900,12 +981,12 @@ function renderGymDay(dayId, containerId) {
     container.innerHTML += `<button class="gym-finish-btn" onclick="completaAllenamentoOggi('${label}')">🏁 Segna Workout come Fatto Oggi</button>`;
 }
 
-function switchGymTab(tabId) {
+function switchGymTab(tabId, evt) {
     document.querySelectorAll('.gym-day-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.gym-tab-btn').forEach(el => el.classList.remove('active'));
-    
+
     document.getElementById('gym-' + tabId).classList.add('active');
-    event.target.classList.add('active');
+    if (evt && evt.target) evt.target.classList.add('active');
 }
 
 // ==========================================
