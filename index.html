@@ -328,6 +328,14 @@
     </div>
   </div>
 
+  <div class="modal-bg" id="ferieTipoOverlay" onclick="if(event.target.id==='ferieTipoOverlay') this.classList.remove('active')">
+    <div class="modal">
+      <h4 style="text-align:center; margin-bottom:18px; color:var(--primary); font-size: 15px;">🏖️ Ferie: giorno intero o orario?</h4>
+      <button class="btn-save" style="margin-bottom:10px;" onclick="confermaTipoFerie('giorno')">📅 Giorno intero</button>
+      <button class="btn-save" style="background:#8B5CF6;" onclick="confermaTipoFerie('orario')">⏱️ Orario (7:15)</button>
+    </div>
+  </div>
+
   <div class="modal-bg" id="weatherOverlay" onclick="if(event.target.id==='weatherOverlay') this.classList.remove('active')">
     <div class="modal">
       <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 16px;">🌦️ Meteo Locale</h4>
@@ -882,21 +890,12 @@ function selectBulkColor(id, event) {
 
   if (!colorObj.isAdd) tempBulkColor = id;
 
-  if (id === 'ferie') {
-    if (selectedKeys.length === 1) {
-      const risposta = prompt("Giorno intero o ore di permesso?\nLascia vuoto per giorno intero, oppure scrivi le ore (es. 7:15):", tempFerieOre ? decimalToOreLabel(tempFerieOre) : "");
-      if (risposta === null) {
-        tempBulkColor = null; // annullato: non cambia il colore
-        renderColors();
-        return;
-      }
-      tempFerieOre = risposta.trim() ? parseOreToDecimal(risposta.trim()) : null;
-    } else {
-      tempFerieOre = null; // selezione multipla: sempre giorno intero
-    }
-  } else {
-    tempFerieOre = null;
+  if (id === 'ferie' && selectedKeys.length === 1) {
+    renderColors(); // mostra subito "Ferie" selezionato mentre si sceglie il tipo
+    document.getElementById('ferieTipoOverlay').classList.add('active');
+    return; // il resto (autoText, ecc.) non serve per Ferie: si chiude in confermaTipoFerie()
   }
+  tempFerieOre = null; // ferie su selezione multipla (sempre giorno intero) o altro colore
 
   if (colorObj.autoText) {
       if (colorObj.isAdd) {
@@ -911,6 +910,14 @@ function selectBulkColor(id, event) {
       document.getElementById('modalText').value = tempBulkText;
   }
   
+  renderColors();
+}
+
+// Standard delle ore di permesso usate per coprire un giorno di ferie: sempre 7:15.
+const FERIE_ORARIO_STD = 7 + 15/60;
+function confermaTipoFerie(tipo) {
+  tempFerieOre = (tipo === 'orario') ? FERIE_ORARIO_STD : null;
+  document.getElementById('ferieTipoOverlay').classList.remove('active');
   renderColors();
 }
 
