@@ -131,7 +131,6 @@
       transparent 6px, transparent 16px
     );
     opacity: 0.4;
-    animation: today-stripes 3s linear infinite;
     pointer-events: none; z-index: 1;
   }
   .today-ring::after {
@@ -150,13 +149,6 @@
     border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-  @keyframes today-stripes {
-    from { background-position: 0 0; }
-    to { background-position: 16px 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .today-ring::before { animation: none; }
   }
   .cell.selected { position: relative; }
   .cell.selected::after { content: ''; position: absolute; inset: 0; background-color: rgba(124, 58, 237, 0.2); border: 2px solid var(--primary); pointer-events: none; z-index: 5; }
@@ -487,7 +479,7 @@ const COLORS = [
   {id:'pomeriggio', label:'Pom.', hex: AUTO_COLOR_B, autoText: '', isAdd: false},
   {id:'smart', label:'Smart', hex:'#E0785F', autoText: '', isAdd: false},
   {id:'ferie', label:'Ferie', hex:'#5B6B80', autoText: '', isAdd: false},
-  {id:'possferie', label:'Poss. Ferie', hex:'#D1D5DB', autoText: '', isAdd: false},
+  {id:'possferie', label:'Poss. Ferie', hex:'repeating-linear-gradient(-45deg, #5B6B80 0, #5B6B80 6px, #ffffff 6px, #ffffff 14px)', autoText: '', isAdd: false},
   {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: true},
   {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: true},
   {id:'corso', label:'Corso', hex:'#5B9BD6', autoText: 'Corso', isAdd: false},
@@ -497,7 +489,12 @@ const COLORS = [
 ];
 
 const darkBgColors = ['#E0785F', '#5B6B80', '#5B9BD6', '#A583CC'];
-const lightBgColors = [AUTO_COLOR_A, AUTO_COLOR_B, '#ffffff', '#BDF0D6', '#D1D5DB'];
+const lightBgColors = [AUTO_COLOR_A, AUTO_COLOR_B, '#ffffff', '#BDF0D6'];
+
+// "Poss. Ferie" ha uno sfondo a bande (grigio ferie + bianco): un testo scuro con un
+// alone bianco a 4 direzioni resta leggibile sia sopra la banda grigia che su quella bianca.
+const POSSFERIE_TEXT_COLOR = '#1F2430';
+const POSSFERIE_TEXT_SHADOW = 'text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;';
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
@@ -875,8 +872,8 @@ function openBulkEdit() {
 function renderColors() {
   document.getElementById('colorGrid').innerHTML = COLORS.map(c => {
     let bgStyle = c.hex === 'none' ? 'var(--card-bg)' : c.hex;
-    let textCol = (c.hex === 'none') ? 'var(--text-main)' : (darkBgColors.includes(c.hex) ? '#ffffff' : '#111827');
-    const textShadow = darkBgColors.includes(c.hex) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+    let textCol = (c.id === 'possferie') ? POSSFERIE_TEXT_COLOR : (c.hex === 'none') ? 'var(--text-main)' : (darkBgColors.includes(c.hex) ? '#ffffff' : '#111827');
+    const textShadow = (c.id === 'possferie') ? POSSFERIE_TEXT_SHADOW : (darkBgColors.includes(c.hex) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '');
     const border = tempBulkColor===c.id ? '2px solid var(--primary)' : '1px solid var(--border-color)';
     return `<div class="color-opt" style="background:${bgStyle}; border:${border}; color:${textCol}; ${textShadow}" onclick="selectBulkColor('${c.id}', event)">${c.label}</div>`;
   }).join('');
@@ -989,8 +986,8 @@ function render() {
             if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
             else { bgStyle = getAutoColor(currentYear, m, cd); }
           }
-          let textCol = (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
-          const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+          let textCol = (user.color === 'possferie') ? POSSFERIE_TEXT_COLOR : (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
+          const textShadow = (user.color === 'possferie') ? POSSFERIE_TEXT_SHADOW : (darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '');
           h += `<div class="cell day-cell ${isT?'today-ring':''}" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}"><span class="day-num">${cd}</span></div>`;
         } else h += `<div class="cell empty"></div>`;
       }
@@ -1008,8 +1005,8 @@ function render() {
             if (dow===0 || dow===6) { bgStyle = 'var(--weekend-bg)'; isWeekend = true; } 
             else { bgStyle = 'var(--default-cell-bg)'; }
           }
-          let textCol = (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
-          const textShadow = darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '';
+          let textCol = (user.color === 'possferie') ? POSSFERIE_TEXT_COLOR : (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
+          const textShadow = (user.color === 'possferie') ? POSSFERIE_TEXT_SHADOW : (darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '');
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
           const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${escapeHtml(l)}</span></div>`).join('');
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
