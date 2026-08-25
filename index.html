@@ -385,6 +385,15 @@
 <script>
 // Gestione Dark Mode
 if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); }
+
+// Precompila il campo "vai a data" con oggi: su iOS Safari un input date senza valore
+// parte vuoto e mostra il placeholder gg/mm/aaaa solo dopo averlo toccato, sembrando rotto.
+(function initGotoDateDefault() {
+  const el = document.getElementById('gotoDateInput');
+  if (!el) return;
+  const t = new Date();
+  el.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+})();
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
