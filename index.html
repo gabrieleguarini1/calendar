@@ -486,7 +486,8 @@ const COLORS = [
   {id:'mattina', label:'Mattina', hex: AUTO_COLOR_A, autoText: '', isAdd: false},
   {id:'pomeriggio', label:'Pom.', hex: AUTO_COLOR_B, autoText: '', isAdd: false},
   {id:'smart', label:'Smart', hex:'#E0785F', autoText: '', isAdd: false},
-  {id:'ferie', label:'Ferie', hex:'#7A8AA0', autoText: '', isAdd: false},
+  {id:'ferie', label:'Ferie', hex:'#5B6B80', autoText: '', isAdd: false},
+  {id:'possferie', label:'Poss. Ferie', hex:'#D1D5DB', autoText: '', isAdd: false},
   {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: true},
   {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: true},
   {id:'corso', label:'Corso', hex:'#5B9BD6', autoText: 'Corso', isAdd: false},
@@ -495,8 +496,8 @@ const COLORS = [
   {id:'stipendio', label:'Stipendio 💰', hex:'none', autoText: 'Stipendio 💰', isAdd: true}
 ];
 
-const darkBgColors = ['#E0785F', '#7A8AA0', '#5B9BD6', '#A583CC'];
-const lightBgColors = [AUTO_COLOR_A, AUTO_COLOR_B, '#ffffff', '#BDF0D6'];
+const darkBgColors = ['#E0785F', '#5B6B80', '#5B9BD6', '#A583CC'];
+const lightBgColors = [AUTO_COLOR_A, AUTO_COLOR_B, '#ffffff', '#BDF0D6', '#D1D5DB'];
 const MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
 const DAYS = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
@@ -654,6 +655,7 @@ function showStats() {
      // Conta Allenamenti
      if (text.includes('🏋️')) stats.GYM++;
      if (dow === 0 || dow === 6) continue; // Esclude weekend da turni
+     if (topColor === 'possferie' || botColor === 'possferie') continue; // possibili ferie: non contano in nessuna statistica
 
      if (topColor === 'none') {
          const autoHex = getAutoColor(y, m, d);
