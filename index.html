@@ -91,6 +91,7 @@
   /* Toolbar */
   .toolbar { position: fixed; top: 0; left: 0; right: 0; background: var(--toolbar-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 12px; z-index: 100; border-bottom: 1px solid var(--border-color); }
   select, button { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+  .toolbar input[type="date"] { height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 13px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
   button:active { transform: scale(0.96); }
   button.undo-btn { background: #F59E0B; color: white; border: none; font-weight: 600; }
   button.today-btn { background: linear-gradient(135deg, var(--primary), #A78BFA); color: white; border: none; font-weight: 600; }
@@ -249,6 +250,7 @@
     body { padding: 4px; padding-top: 60px; overflow-x: hidden; }
     .toolbar { padding: 6px; gap: 4px; }
     select, button { height: 32px; padding: 0 8px; font-size: 11px; }
+    .toolbar input[type="date"] { height: 32px; padding: 0 6px; font-size: 11px; }
     .cal-grid { gap: 15px; margin-top: 5px; }
     .month-block { height: calc(100dvh - 70px); display: flex; flex-direction: column; scroll-margin-top: 65px; border-radius: 12px; }
     .month-header { flex: 0 0 auto; padding: 6px; font-size: 15px; }
@@ -282,6 +284,8 @@
   <div class="toolbar" id="mainToolbar">
     <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
+    <input type="date" id="gotoDateInput" title="Vai a una data">
+    <button onclick="goToDate()" title="Vai alla data selezionata">📍 Vai</button>
     <button class="today-btn" style="background: var(--primary); color: white;" onclick="showStats()">📊 Riepilogo</button>
     <button class="gym-btn" onclick="openGymOverlay()">🏋️ GYM</button>
     <button onclick="location.reload()" title="Aggiorna">🔄</button>
@@ -1035,18 +1039,51 @@ const s = document.getElementById('yearSel');
 for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
 s.value = currentYear;
 s.onchange = () => { currentYear = +s.value; render(); };
+// Scrolla in modo che la cella del giorno (numero + testo sotto) sia centrata nello
+// schermo, calcolandolo dalla posizione reale degli elementi invece che da un'altezza
+// fissa della toolbar — così funziona a prescindere da quante righe occupa la toolbar
+// (su schermi stretti può andare a capo) e da browser/iPhone.
+function scrollToDayCentered(y, m, d) {
+  const topCell = document.querySelector(`[data-key="${y}-${m}-${d}-top"]`);
+  const botCell = document.querySelector(`[data-key="${y}-${m}-${d}-bottom"]`);
+  if (!topCell || !botCell) return false;
+  const topRect = topCell.getBoundingClientRect();
+  const botRect = botCell.getBoundingClientRect();
+  const combinedCenter = (topRect.top + botRect.bottom) / 2;
+  const viewportCenter = window.innerHeight / 2;
+  window.scrollBy({ top: combinedCenter - viewportCenter, behavior: 'smooth' });
+  return true;
+}
+
 function scrollToToday() {
   const t = new Date();
   currentYear = t.getFullYear(); s.value = currentYear; render();
-  setTimeout(() => { 
-    const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
-    if(target) {
-        const toolbarHeight = document.getElementById('mainToolbar').offsetHeight;
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = target.getBoundingClientRect().top;
-        const offsetPosition = (elementRect - bodyRect) - toolbarHeight - 10;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+  setTimeout(() => {
+    if (!scrollToDayCentered(currentYear, t.getMonth()+1, t.getDate())) {
+      const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }, 250);
+}
+
+function goToDate() {
+  const val = document.getElementById('gotoDateInput').value; // "YYYY-MM-DD"
+  if (!val) return;
+  const [y, m, d] = val.split('-').map(Number);
+  currentYear = y; s.value = currentYear; render();
+  setTimeout(() => {
+    if (!scrollToDayCentered(y, m, d)) {
+      const target = document.getElementById(`m-${y}-${m}`);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    // Evidenzia brevemente la cella per farla notare a colpo d'occhio
+    const cells = [
+      document.querySelector(`[data-key="${y}-${m}-${d}-top"]`),
+      document.querySelector(`[data-key="${y}-${m}-${d}-bottom"]`)
+    ];
+    cells.forEach(c => c && c.classList.add('selected'));
+    setTimeout(() => cells.forEach(c => c && c.classList.remove('selected')), 1500);
   }, 250);
 }
 
