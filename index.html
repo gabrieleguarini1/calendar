@@ -282,7 +282,6 @@
 
 <div id="appContent">
   <div class="toolbar" id="mainToolbar">
-    <select id="yearSel"></select>
     <button class="today-btn" onclick="scrollToToday()">📅 Oggi</button>
     <input type="date" id="gotoDateInput" title="Vai a una data">
     <button onclick="goToDate()" title="Vai alla data selezionata">📍 Vai</button>
@@ -615,21 +614,19 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Riepilogo Stipendio
+// Riepilogo
 function showStats() {
   const now = new Date();
   const m = now.getMonth() + 1;
   const y = now.getFullYear();
   let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0, GYM: 0 };
-  let giorniLavoroEffettivi = 0;
-  let oreMaggiorazione = 0;
-  
+
   const daysInMonth = new Date(y, m, 0).getDate();
   for (let d = 1; d <= daysInMonth; d++) {
      const dow = new Date(y, m-1, d).getDay();
      const kTop = `${y}-${m}-${d}-top`;
      const kBot = `${y}-${m}-${d}-bottom`;
-     
+
      let topColor = db[kTop]?.color || 'none';
      let botColor = db[kBot]?.color || 'none';
      let text = (db[kBot]?.text || "").toLowerCase();
@@ -644,10 +641,12 @@ function showStats() {
      }
 
      let isFerie = (botColor === 'ferie' || text.includes('ferie') || topColor === 'ferie');
-     let isFestivita = (botColor === 'festivita' || text.includes('festivita') || topColor === 'festivita');
 
-     if (topColor === 'mattina') stats.MATTINA++;
-     if (topColor === 'pomeriggio') stats.POMERIGGIO++;
+     // I giorni di ferie non contano come mattina/pomeriggio lavorato
+     if (!isFerie) {
+         if (topColor === 'mattina') stats.MATTINA++;
+         if (topColor === 'pomeriggio') stats.POMERIGGIO++;
+     }
 
      if (isFerie) {
          stats.FERIE++;
@@ -656,20 +655,8 @@ function showStats() {
      } else if (botColor === 'none' || botColor === 'vuoto' || !botColor) {
          stats.SEDE++;
      }
-     
-     if (!isFerie && !isFestivita) {
-         giorniLavoroEffettivi++;
-         if (topColor === 'mattina') oreMaggiorazione += 1.5;
-         if (topColor === 'pomeriggio') oreMaggiorazione += 1.0;
-     }
   }
 
-  const stipendioBase = 3745.20;
-  const indennitaTurno = giorniLavoroEffettivi * 8.07692;
-  const maggiorazioneTurno = oreMaggiorazione * 8.01595;
-  const totaleLordo = stipendioBase + indennitaTurno + maggiorazioneTurno - 180.00;
-  const tasse = totaleLordo * 0.375;
-  const stipendioNetto = totaleLordo - tasse;
   const ferieRimanenti = calcolaFerieRimanenti();
 
   document.getElementById('statsContent').innerHTML = `
@@ -684,28 +671,8 @@ function showStats() {
     <div style="display:flex; justify-content:space-between; color:#8B5CF6;"><span>🏖️ Ferie rimanenti:</span> <b>${ferieRimanenti.giorni} gg</b></div>
     <div style="display:flex; justify-content:space-between; color:#8B5CF6;"><span>⏱️ Permesso rimanente:</span> <b>${decimalToOreLabel(ferieRimanenti.ore)}</b></div>
     ` : ''}
-    <hr style="border:0; border-top:1px solid var(--border-color); margin: 8px 0;">
-    <div style="text-align:center;">
-        💰 <b>Previsione Stipendio:</b><br>
-        <span style="font-size:10px; color:gray;">Base: 3745,20€ | Ind: +${indennitaTurno.toFixed(2)}€ | Magg: +${maggiorazioneTurno.toFixed(2)}€</span><br>
-        <div style="display: flex; align-items: center; justify-content: center; margin-top: 5px;">
-            <span id="stipendioAmount" style="font-size:20px; font-weight:700; color:#27AE60;" data-amount="€ ${stipendioNetto.toFixed(2).replace('.', ',')}">€ ${stipendioNetto.toFixed(2).replace('.', ',')}</span>
-            <button onclick="toggleStipendio(this)" style="background:transparent; border:none; box-shadow:none; font-size:18px; cursor:pointer; padding:0; margin-left:8px; height:auto;" title="Nascondi importo">🙈</button>
-        </div>
-    </div>
   `;
   document.getElementById('statsOverlay').classList.add('active');
-}
-
-function toggleStipendio(btn) {
-  const el = document.getElementById('stipendioAmount');
-  if (el.innerText.includes('***')) {
-    el.innerText = el.getAttribute('data-amount');
-    btn.innerText = '🙈';
-  } else {
-    el.innerText = '***,** €';
-    btn.innerText = '👁️';
-  }
 }
 
 function shareWeek() {
@@ -1035,10 +1002,6 @@ function render() {
   }
 }
 
-const s = document.getElementById('yearSel');
-for(let y=2024; y<=2080; y++) { let o=document.createElement('option'); o.value=y; o.textContent=y; s.appendChild(o); }
-s.value = currentYear;
-s.onchange = () => { currentYear = +s.value; render(); };
 // Scrolla in modo che la cella del giorno (numero + testo sotto) sia centrata nello
 // schermo, calcolandolo dalla posizione reale degli elementi invece che da un'altezza
 // fissa della toolbar — così funziona a prescindere da quante righe occupa la toolbar
@@ -1057,7 +1020,7 @@ function scrollToDayCentered(y, m, d) {
 
 function scrollToToday() {
   const t = new Date();
-  currentYear = t.getFullYear(); s.value = currentYear; render();
+  currentYear = t.getFullYear(); render();
   setTimeout(() => {
     if (!scrollToDayCentered(currentYear, t.getMonth()+1, t.getDate())) {
       const target = document.getElementById(`m-${currentYear}-${t.getMonth()+1}`);
@@ -1070,7 +1033,7 @@ function goToDate() {
   const val = document.getElementById('gotoDateInput').value; // "YYYY-MM-DD"
   if (!val) return;
   const [y, m, d] = val.split('-').map(Number);
-  currentYear = y; s.value = currentYear; render();
+  currentYear = y; render();
   setTimeout(() => {
     if (!scrollToDayCentered(y, m, d)) {
       const target = document.getElementById(`m-${y}-${m}`);
