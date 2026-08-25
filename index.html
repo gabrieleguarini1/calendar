@@ -889,10 +889,7 @@ function selectBulkColor(id, event) {
     tempFerieOre = null;
   }
 
-  if (id === 'none') {
-      tempBulkText = ''; 
-      document.getElementById('modalText').value = ''; 
-  } else if (colorObj.autoText) {
+  if (colorObj.autoText) {
       if (colorObj.isAdd) {
           // CONTROLLO: Se il testo NON contiene già la stringa (es. "🚂 8.52"), allora la aggiunge
           if (!tempBulkText.includes(colorObj.autoText)) {
