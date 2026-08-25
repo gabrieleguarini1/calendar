@@ -302,7 +302,8 @@
 
   <div class="modal-bg" id="statsOverlay" onclick="if(event.target.id==='statsOverlay') this.classList.remove('active')">
     <div class="modal">
-      <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 16px;">📋 Riepilogo e Strumenti</h4>
+      <h4 style="text-align:center; margin-bottom:2px; color:var(--primary); font-size: 16px;">📋 Riepilogo e Strumenti</h4>
+      <p id="statsAggiornatoAl" style="text-align:center; font-size:11px; opacity:0.65; margin-bottom:13px;"></p>
       <div id="statsContent" style="line-height:1.6; font-size:12px; font-weight:500; margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
           <button class="btn-save" style="margin-top:0; background: #25D366; font-size: 11px; padding: 10px;" onclick="shareWeek()">📤 Invia</button>
@@ -622,7 +623,8 @@ function showStats() {
   let stats = { MATTINA: 0, POMERIGGIO: 0, SMART: 0, SEDE: 0, FERIE: 0, GYM: 0 };
 
   const daysInMonth = new Date(y, m, 0).getDate();
-  for (let d = 1; d <= daysInMonth; d++) {
+  const finoAlGiorno = Math.min(daysInMonth, now.getDate()); // conta solo fino a oggi, non tutto il mese
+  for (let d = 1; d <= finoAlGiorno; d++) {
      const dow = new Date(y, m-1, d).getDay();
      const kTop = `${y}-${m}-${d}-top`;
      const kBot = `${y}-${m}-${d}-bottom`;
@@ -658,6 +660,7 @@ function showStats() {
   }
 
   const ferieRimanenti = calcolaFerieRimanenti();
+  document.getElementById('statsAggiornatoAl').textContent = `Turni del mese aggiornati al ${now.getDate()}/${m}`;
 
   document.getElementById('statsContent').innerHTML = `
     <div style="display:flex; justify-content:space-between;"><span>☀️ Mattine:</span> <b>${stats.MATTINA}</b></div>
