@@ -301,12 +301,26 @@
     <div class="modal">
       <h4 style="text-align:center; margin-bottom:15px; color:var(--primary); font-size: 16px;">📋 Riepilogo e Strumenti</h4>
       <div id="statsContent" style="line-height:1.6; font-size:12px; font-weight:500; margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
           <button class="btn-save" style="margin-top:0; background: #25D366; font-size: 11px; padding: 10px;" onclick="shareWeek()">📤 Invia</button>
           <button class="btn-save" style="margin-top:0; background: #3498DB; font-size: 11px; padding: 10px;" onclick="showWeather()">🌦️ Meteo</button>
+          <button class="btn-save" style="margin-top:0; background: #8B5CF6; font-size: 11px; padding: 10px;" onclick="openFerieSettings()">🏖️ Ferie</button>
           <button class="btn-save" style="margin-top:0; background: #374151; font-size: 11px; padding: 10px;" onclick="toggleDarkMode()">🌓 Tema</button>
       </div>
       <button class="btn-save" style="background: #E74C3C; padding: 10px; margin-top: 5px;" onclick="document.getElementById('statsOverlay').classList.remove('active')">CHIUDI</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="ferieOverlay" onclick="if(event.target.id==='ferieOverlay') this.classList.remove('active')">
+    <div class="modal">
+      <h4 style="text-align:center; margin-bottom:6px; color:var(--primary); font-size: 16px;">🏖️ Ferie e permessi</h4>
+      <p style="text-align:center; font-size:12px; opacity:0.75; margin-bottom:16px;">Imposta quanto ti resta oggi. Da qui in poi l'app scala automaticamente ogni giorno di ferie che segni.</p>
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:6px;">Giorni di ferie rimanenti</label>
+      <input type="number" id="ferieGiorniInput" class="login-input" style="margin-bottom:12px;" placeholder="es. 37" min="0" step="1">
+      <label style="font-size:12px; font-weight:600; display:block; margin-bottom:6px;">Ore di permesso rimanenti (formato ore:minuti, es. 132:30)</label>
+      <input type="text" id="ferieOreInput" class="login-input" style="margin-bottom:12px;" placeholder="es. 132:00">
+      <button class="btn-save" onclick="saveFerieSettings()">SALVA</button>
+      <button class="btn-save" style="background: #6B7280; margin-top: 8px;" onclick="document.getElementById('ferieOverlay').classList.remove('active')">ANNULLA</button>
     </div>
   </div>
 
@@ -395,6 +409,7 @@ let selectedKeys = [];
 let isSelecting = false;
 let tempBulkColor = null;
 let tempBulkText = "";
+let tempFerieOre = null;
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -503,6 +518,74 @@ function pushPatch(patch) {
     .catch(err => { console.error('Errore salvataggio Firebase', err); showToast('⚠️ Errore salvataggio', true); });
 }
 
+// --- Ferie e permessi ---
+
+// Accetta "7:15", "7.15" o "7,15" come 7 ore e 15 minuti (non 7.15 ore decimali).
+function parseOreToDecimal(str) {
+  if (!str) return 0;
+  const m = String(str).trim().match(/^(\d+)[.,:](\d{1,2})$/);
+  if (m) return parseInt(m[1], 10) + parseInt(m[2], 10) / 60;
+  const n = parseFloat(String(str).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+function decimalToOreLabel(dec) {
+  const sign = dec < 0 ? '-' : '';
+  const abs = Math.abs(dec);
+  const h = Math.floor(abs);
+  const m = Math.round((abs - h) * 60);
+  return `${sign}${h}:${String(m).padStart(2, '0')}`;
+}
+
+function calcolaFerieRimanenti() {
+  const cfg = db.ferie_config;
+  if (!cfg) return null;
+  const rifDate = new Date(cfg.dataRiferimento);
+  rifDate.setHours(0, 0, 0, 0);
+
+  const giorniVisti = new Set();
+  let giorniUsati = 0, oreUsate = 0;
+
+  Object.keys(db).forEach(key => {
+    const m = key.match(/^(\d+)-(\d+)-(\d+)-(top|bottom)$/);
+    if (!m) return;
+    const dayId = `${m[1]}-${m[2]}-${m[3]}`;
+    if (giorniVisti.has(dayId)) return;
+
+    const dateObj = new Date(+m[1], +m[2] - 1, +m[3]);
+    dateObj.setHours(0, 0, 0, 0);
+    if (dateObj <= rifDate) return;
+
+    const top = db[`${dayId}-top`];
+    const bottom = db[`${dayId}-bottom`];
+    const ferieEntry = (bottom && bottom.color === 'ferie') ? bottom : (top && top.color === 'ferie' ? top : null);
+    if (!ferieEntry) return;
+
+    giorniVisti.add(dayId);
+    if (ferieEntry.ferieOre) oreUsate += ferieEntry.ferieOre;
+    else giorniUsati += 1;
+  });
+
+  return { giorni: cfg.giorni - giorniUsati, ore: cfg.ore - oreUsate };
+}
+
+function openFerieSettings() {
+  const cfg = db.ferie_config;
+  const attuale = calcolaFerieRimanenti();
+  document.getElementById('ferieGiorniInput').value = attuale ? attuale.giorni : (cfg ? cfg.giorni : '');
+  document.getElementById('ferieOreInput').value = attuale ? decimalToOreLabel(attuale.ore) : (cfg ? decimalToOreLabel(cfg.ore) : '');
+  document.getElementById('statsOverlay').classList.remove('active');
+  document.getElementById('ferieOverlay').classList.add('active');
+}
+
+function saveFerieSettings() {
+  const giorni = parseInt(document.getElementById('ferieGiorniInput').value, 10) || 0;
+  const ore = parseOreToDecimal(document.getElementById('ferieOreInput').value);
+  const oggi = new Date();
+  db.ferie_config = { giorni, ore, dataRiferimento: `${oggi.getFullYear()}-${oggi.getMonth()+1}-${oggi.getDate()}` };
+  pushPatch({ ferie_config: db.ferie_config });
+  document.getElementById('ferieOverlay').classList.remove('active');
+}
+
 function saveState() {
   historyStack.push(JSON.stringify(db));
   if(historyStack.length > 30) historyStack.shift();
@@ -583,6 +666,7 @@ function showStats() {
   const totaleLordo = stipendioBase + indennitaTurno + maggiorazioneTurno - 180.00;
   const tasse = totaleLordo * 0.375;
   const stipendioNetto = totaleLordo - tasse;
+  const ferieRimanenti = calcolaFerieRimanenti();
 
   document.getElementById('statsContent').innerHTML = `
     <div style="display:flex; justify-content:space-between;"><span>☀️ Mattine:</span> <b>${stats.MATTINA}</b></div>
@@ -591,6 +675,11 @@ function showStats() {
     <div style="display:flex; justify-content:space-between; color:#E74C3C;"><span>🏠 Smart:</span> <b>${stats.SMART}</b></div>
     <div style="display:flex; justify-content:space-between; color:gray;"><span>🏖️ Ferie:</span> <b>${stats.FERIE}</b></div>
     <div style="display:flex; justify-content:space-between; color:#27AE60;"><span>🏋️ Workout:</span> <b>${stats.GYM}</b></div>
+    ${ferieRimanenti ? `
+    <hr style="border:0; border-top:1px solid var(--border-color); margin: 8px 0;">
+    <div style="display:flex; justify-content:space-between; color:#8B5CF6;"><span>🏖️ Ferie rimanenti:</span> <b>${ferieRimanenti.giorni} gg</b></div>
+    <div style="display:flex; justify-content:space-between; color:#8B5CF6;"><span>⏱️ Permesso rimanente:</span> <b>${decimalToOreLabel(ferieRimanenti.ore)}</b></div>
+    ` : ''}
     <hr style="border:0; border-top:1px solid var(--border-color); margin: 8px 0;">
     <div style="text-align:center;">
         💰 <b>Previsione Stipendio:</b><br>
@@ -782,7 +871,8 @@ function openBulkEdit() {
       const data = db[selectedKeys[0]] || {};
       tempBulkColor = data.color || 'none';
       tempBulkText = data.text || "";
-  } else { tempBulkColor = null; tempBulkText = ""; }
+      tempFerieOre = data.ferieOre || null;
+  } else { tempBulkColor = null; tempBulkText = ""; tempFerieOre = null; }
   document.getElementById('modalText').value = tempBulkText;
   renderColors();
   document.getElementById('modal').classList.add('active');
@@ -806,10 +896,26 @@ function selectBulkColor(id, event) {
   tempBulkText = document.getElementById('modalText').value;
   
   const colorObj = COLORS.find(c => c.id === id);
-  
+
   if (!colorObj.isAdd) tempBulkColor = id;
-  
-  if (id === 'none') { 
+
+  if (id === 'ferie') {
+    if (selectedKeys.length === 1) {
+      const risposta = prompt("Giorno intero o ore di permesso?\nLascia vuoto per giorno intero, oppure scrivi le ore (es. 7:15):", tempFerieOre ? decimalToOreLabel(tempFerieOre) : "");
+      if (risposta === null) {
+        tempBulkColor = null; // annullato: non cambia il colore
+        renderColors();
+        return;
+      }
+      tempFerieOre = risposta.trim() ? parseOreToDecimal(risposta.trim()) : null;
+    } else {
+      tempFerieOre = null; // selezione multipla: sempre giorno intero
+    }
+  } else {
+    tempFerieOre = null;
+  }
+
+  if (id === 'none') {
       tempBulkText = ''; 
       document.getElementById('modalText').value = ''; 
   } else if (colorObj.autoText) {
@@ -835,6 +941,7 @@ function saveAndCloseModal() {
   const patch = {};
   selectedKeys.forEach(k => {
     const newVal = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
+    if (newVal.color === 'ferie' && tempFerieOre) newVal.ferieOre = tempFerieOre;
     if (newVal.color === 'none' && newVal.text === '') {
       delete db[k];
       patch[k] = null;
