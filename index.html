@@ -118,6 +118,11 @@
   .note-cell { height: 95px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
   .note-cell::-webkit-scrollbar { width: 4px; }
   .note-cell::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+  .task-chip { display: flex; align-items: center; gap: 4px; border-radius: 6px; padding: 2px 4px 2px 6px; margin-bottom: 3px; }
+  .task-text { flex: 1; min-width: 0; word-break: break-word; }
+  .task-x { flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; cursor: pointer; transition: transform 0.1s; }
+  .task-x:active { transform: scale(0.8); }
   
   /* Oggi: strisce diagonali animate sopra il colore del turno, così il colore
      resta visibile invece di essere coperto da un pallino pieno. */
@@ -254,6 +259,8 @@
     .day-cell { height: 100%; }
     .day-num { font-size: 13px; }
     .note-cell { height: 100%; font-size: 9px; padding: 3px 2px; }
+    .task-chip { padding: 1px 3px 1px 4px; margin-bottom: 2px; gap: 3px; }
+    .task-x { width: 11px; height: 11px; font-size: 8px; }
     .today-ring::before { background-image: repeating-linear-gradient(-45deg, var(--primary) 0, var(--primary) 4px, transparent 4px, transparent 11px); }
     .today-ring::after { inset: -1px; border-width: 2px; border-radius: 6px; }
     .today-ring .day-num { min-width: 20px; height: 20px; font-size: 12px; }
@@ -1009,6 +1016,26 @@ function getAutoColor(y, m, d) {
   return wk % 2 === 0 ? AUTO_COLOR_A : AUTO_COLOR_B;
 }
 
+function deleteTaskLine(key, index, event) {
+  event.stopPropagation();
+  const entry = db[key];
+  if (!entry) return;
+  saveState();
+  const lines = (entry.text || '').split('\n').filter(l => l.trim() !== '');
+  lines.splice(index, 1);
+  const newText = lines.join('\n');
+  let patch;
+  if (newText === '' && (!entry.color || entry.color === 'none')) {
+    delete db[key];
+    patch = { [key]: null };
+  } else {
+    entry.text = newText;
+    patch = { [key]: entry };
+  }
+  pushPatch(patch);
+  render();
+}
+
 function render() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
@@ -1058,8 +1085,11 @@ function render() {
           }
           let textCol = (user.color === 'possferie') ? POSSFERIE_TEXT_COLOR : (darkBgColors.includes(bgStyle)) ? '#ffffff' : (lightBgColors.includes(bgStyle) ? '#111827' : (isWeekend ? 'var(--weekend-text)' : 'var(--default-text)'));
           const textShadow = (user.color === 'possferie') ? POSSFERIE_TEXT_SHADOW : (darkBgColors.includes(bgStyle) ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.3);' : '');
+          const isDarkBg = (user.color !== 'possferie') && darkBgColors.includes(bgStyle);
+          const chipBg = isDarkBg ? 'rgba(255,255,255,0.18)' : 'rgba(17,24,39,0.08)';
+          const chipXBg = isDarkBg ? 'rgba(255,255,255,0.35)' : 'rgba(17,24,39,0.18)';
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
-          const htmlTasks = lines.map(l => `<div style="margin-bottom:3px; display:flex; gap:4px;"><span>•</span><span style="flex:1; word-break:break-word;">${escapeHtml(l)}</span></div>`).join('');
+          const htmlTasks = lines.map((l, idx) => `<div class="task-chip" style="background:${chipBg};"><span class="task-text">${escapeHtml(l)}</span><span class="task-x" style="background:${chipXBg};" onclick="deleteTaskLine('${k}', ${idx}, event)">×</span></div>`).join('');
           h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
