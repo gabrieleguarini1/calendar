@@ -1020,8 +1020,9 @@ function deleteTaskLine(key, index, event) {
   event.stopPropagation();
   const entry = db[key];
   if (!entry) return;
-  saveState();
   const lines = (entry.text || '').split('\n').filter(l => l.trim() !== '');
+  if (!confirm(`Cancellare questo task?\n\n"${lines[index]}"`)) return;
+  saveState();
   lines.splice(index, 1);
   const newText = lines.join('\n');
   let patch;
