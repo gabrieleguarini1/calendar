@@ -424,6 +424,7 @@ let isSelecting = false;
 let tempBulkColor = null;
 let tempBulkText = "";
 let tempFerieOre = null;
+let tempPermessoOre = null;
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -485,7 +486,8 @@ const COLORS = [
   {id:'corso', label:'Corso', hex:'#5B9BD6', autoText: 'Corso', isAdd: false},
   {id:'allatto', label:'Allatto', hex:'#A583CC', autoText: '🟣', isAdd: true},
   {id:'festivita', label:'Festività', hex:'#BDF0D6', autoText: '', isAdd: false},
-  {id:'stipendio', label:'Stipendio 💰', hex:'none', autoText: 'Stipendio 💰', isAdd: true}
+  {id:'stipendio', label:'Stipendio 💰', hex:'none', autoText: 'Stipendio 💰', isAdd: true},
+  {id:'permesso', label:'Permesso', hex:'none', autoText: '', isAdd: true}
 ];
 
 const darkBgColors = ['#E0785F', '#5B6B80', '#5B9BD6', '#A583CC'];
@@ -570,6 +572,7 @@ function calcolaFerieRimanenti() {
     if (!m) return;
     const dayId = `${m[1]}-${m[2]}-${m[3]}`;
     if (giorniVisti.has(dayId)) return;
+    giorniVisti.add(dayId); // ogni giorno esaminato una sola volta, sia per ferie che per permesso
 
     const dateObj = new Date(+m[1], +m[2] - 1, +m[3]);
     dateObj.setHours(0, 0, 0, 0);
@@ -577,12 +580,17 @@ function calcolaFerieRimanenti() {
 
     const top = db[`${dayId}-top`];
     const bottom = db[`${dayId}-bottom`];
-    const ferieEntry = (bottom && bottom.color === 'ferie') ? bottom : (top && top.color === 'ferie' ? top : null);
-    if (!ferieEntry) return;
 
-    giorniVisti.add(dayId);
-    if (ferieEntry.ferieOre) oreUsate += ferieEntry.ferieOre;
-    else giorniUsati += 1;
+    // Ferie (giorno intero o coperto a ore)
+    const ferieEntry = (bottom && bottom.color === 'ferie') ? bottom : (top && top.color === 'ferie' ? top : null);
+    if (ferieEntry) {
+      if (ferieEntry.ferieOre) oreUsate += ferieEntry.ferieOre;
+      else giorniUsati += 1;
+    }
+
+    // Permesso indipendente (tasto "Permesso", non legato al colore Ferie)
+    if (top && top.permessoOre) oreUsate += top.permessoOre;
+    if (bottom && bottom.permessoOre) oreUsate += bottom.permessoOre;
   });
 
   return { giorni: cfg.giorni - giorniUsati, ore: cfg.ore - oreUsate };
@@ -863,7 +871,8 @@ function openBulkEdit() {
       tempBulkColor = data.color || 'none';
       tempBulkText = data.text || "";
       tempFerieOre = data.ferieOre || null;
-  } else { tempBulkColor = null; tempBulkText = ""; tempFerieOre = null; }
+      tempPermessoOre = data.permessoOre || null;
+  } else { tempBulkColor = null; tempBulkText = ""; tempFerieOre = null; tempPermessoOre = null; }
   document.getElementById('modalText').value = tempBulkText;
   renderColors();
   document.getElementById('modal').classList.add('active');
@@ -895,6 +904,23 @@ function selectBulkColor(id, event) {
     document.getElementById('ferieTipoOverlay').classList.add('active');
     return; // il resto (autoText, ecc.) non serve per Ferie: si chiude in confermaTipoFerie()
   }
+
+  if (id === 'permesso' && selectedKeys.length === 1) {
+    const risposta = prompt("Quante ore di permesso?\n(es. 2:30 — lascia vuoto per toglierlo)", tempPermessoOre ? decimalToOreLabel(tempPermessoOre) : "");
+    if (risposta === null) { renderColors(); return; } // annullato, nessuna modifica
+    tempBulkText = tempBulkText.split('\n').filter(l => !l.trim().startsWith('⏱️ Permesso')).join('\n');
+    if (risposta.trim()) {
+      tempPermessoOre = parseOreToDecimal(risposta.trim());
+      const label = `⏱️ Permesso ${decimalToOreLabel(tempPermessoOre)}`;
+      tempBulkText = tempBulkText ? tempBulkText + "\n" + label : label;
+    } else {
+      tempPermessoOre = null;
+    }
+    document.getElementById('modalText').value = tempBulkText;
+    renderColors();
+    return;
+  }
+
   tempFerieOre = null; // ferie su selezione multipla (sempre giorno intero) o altro colore
 
   if (colorObj.autoText) {
@@ -929,6 +955,7 @@ function saveAndCloseModal() {
   selectedKeys.forEach(k => {
     const newVal = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
     if (newVal.color === 'ferie' && tempFerieOre) newVal.ferieOre = tempFerieOre;
+    if (tempPermessoOre) newVal.permessoOre = tempPermessoOre;
     if (newVal.color === 'none' && newVal.text === '') {
       delete db[k];
       patch[k] = null;
