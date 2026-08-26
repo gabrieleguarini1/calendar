@@ -558,6 +558,16 @@ function decimalToOreLabel(dec) {
   return `${sign}${h}:${String(m).padStart(2, '0')}`;
 }
 
+// Le ore di Ferie-a-orario e di Permesso si leggono SEMPRE da queste righe di testo,
+// non da un campo separato: così se cancelli la riga a mano, il conteggio si aggiorna
+// da solo (nessun valore "fantasma" che resta scalato dopo aver cancellato il task).
+const RE_FERIE_ORE = /🏖️\s*Ferie a ore\s*\((\d+)[.,:](\d{1,2})\)/;
+const RE_PERMESSO_ORE = /⏱️\s*Permesso\s+(\d+)[.,:](\d{1,2})/;
+function parseOreDaTesto(testo, regex) {
+  const mm = (testo || '').match(regex);
+  return mm ? parseInt(mm[1], 10) + parseInt(mm[2], 10) / 60 : null;
+}
+
 function calcolaFerieRimanenti() {
   const cfg = db.ferie_config;
   if (!cfg) return null;
@@ -580,17 +590,19 @@ function calcolaFerieRimanenti() {
 
     const top = db[`${dayId}-top`];
     const bottom = db[`${dayId}-bottom`];
+    const testoGiorno = `${(top && top.text) || ''}\n${(bottom && bottom.text) || ''}`;
 
-    // Ferie (giorno intero o coperto a ore)
+    // Ferie: giorno intero, a meno che nel testo non ci sia ancora la riga "Ferie a ore"
     const ferieEntry = (bottom && bottom.color === 'ferie') ? bottom : (top && top.color === 'ferie' ? top : null);
     if (ferieEntry) {
-      if (ferieEntry.ferieOre) oreUsate += ferieEntry.ferieOre;
+      const oreFerie = parseOreDaTesto(testoGiorno, RE_FERIE_ORE);
+      if (oreFerie !== null) oreUsate += oreFerie;
       else giorniUsati += 1;
     }
 
-    // Permesso indipendente (tasto "Permesso", non legato al colore Ferie)
-    if (top && top.permessoOre) oreUsate += top.permessoOre;
-    if (bottom && bottom.permessoOre) oreUsate += bottom.permessoOre;
+    // Permesso indipendente: contano solo se la riga di testo è ancora presente
+    const orePermesso = parseOreDaTesto(testoGiorno, RE_PERMESSO_ORE);
+    if (orePermesso !== null) oreUsate += orePermesso;
   });
 
   return { giorni: cfg.giorni - giorniUsati, ore: cfg.ore - oreUsate };
@@ -870,8 +882,8 @@ function openBulkEdit() {
       const data = db[selectedKeys[0]] || {};
       tempBulkColor = data.color || 'none';
       tempBulkText = data.text || "";
-      tempFerieOre = data.ferieOre || null;
-      tempPermessoOre = data.permessoOre || null;
+      tempFerieOre = parseOreDaTesto(tempBulkText, RE_FERIE_ORE);
+      tempPermessoOre = parseOreDaTesto(tempBulkText, RE_PERMESSO_ORE);
   } else { tempBulkColor = null; tempBulkText = ""; tempFerieOre = null; tempPermessoOre = null; }
   document.getElementById('modalText').value = tempBulkText;
   renderColors();
@@ -942,7 +954,19 @@ function selectBulkColor(id, event) {
 // Standard delle ore di permesso usate per coprire un giorno di ferie: sempre 7:15.
 const FERIE_ORARIO_STD = 7 + 15/60;
 function confermaTipoFerie(tipo) {
-  tempFerieOre = (tipo === 'orario') ? FERIE_ORARIO_STD : null;
+  tempBulkText = document.getElementById('modalText').value;
+  // Toglie un'eventuale riga "Ferie a ore" già presente, prima di rimetterla (o no)
+  tempBulkText = tempBulkText.split('\n').filter(l => !l.trim().startsWith('🏖️ Ferie a ore')).join('\n');
+
+  if (tipo === 'orario') {
+    tempFerieOre = FERIE_ORARIO_STD;
+    const label = `🏖️ Ferie a ore (${decimalToOreLabel(FERIE_ORARIO_STD)})`;
+    tempBulkText = tempBulkText ? tempBulkText + '\n' + label : label;
+  } else {
+    tempFerieOre = null;
+  }
+
+  document.getElementById('modalText').value = tempBulkText;
   document.getElementById('ferieTipoOverlay').classList.remove('active');
   renderColors();
 }
@@ -953,9 +977,9 @@ function saveAndCloseModal() {
   saveState();
   const patch = {};
   selectedKeys.forEach(k => {
+    // Le ore di Ferie/Permesso si leggono dal testo (righe "🏖️ Ferie a ore"/"⏱️ Permesso"),
+    // non serve più salvarle anche come campo separato.
     const newVal = { color: tempBulkColor || (db[k]?.color || 'none'), text: tempBulkText };
-    if (newVal.color === 'ferie' && tempFerieOre) newVal.ferieOre = tempFerieOre;
-    if (tempPermessoOre) newVal.permessoOre = tempPermessoOre;
     if (newVal.color === 'none' && newVal.text === '') {
       delete db[k];
       patch[k] = null;
