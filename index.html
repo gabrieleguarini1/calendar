@@ -332,7 +332,8 @@
     <div class="modal">
       <h4 style="text-align:center; margin-bottom:18px; color:var(--primary); font-size: 15px;">🏖️ Ferie: giorno intero o orario?</h4>
       <button class="btn-save" style="margin-bottom:10px;" onclick="confermaTipoFerie('giorno')">📅 Giorno intero</button>
-      <button class="btn-save" style="background:#8B5CF6;" onclick="confermaTipoFerie('orario')">⏱️ Orario (7:15)</button>
+      <button class="btn-save" style="background:#8B5CF6; margin-bottom:10px;" onclick="confermaTipoFerie('orario')">⏱️ Orario (7:15)</button>
+      <button class="btn-save" style="background:#8B5CF6;" onclick="confermaTipoFerie('orario7')">⏱️ Orario (7 ore)</button>
     </div>
   </div>
 
@@ -958,16 +959,17 @@ function selectBulkColor(id, event) {
   renderColors();
 }
 
-// Standard delle ore di permesso usate per coprire un giorno di ferie: sempre 7:15.
+// Standard delle ore di permesso usate per coprire un giorno di ferie: 7:15 oppure 7:00.
 const FERIE_ORARIO_STD = 7 + 15/60;
+const FERIE_ORARIO_7ORE = 7;
 function confermaTipoFerie(tipo) {
   tempBulkText = document.getElementById('modalText').value;
   // Toglie un'eventuale riga "Ferie a ore" già presente, prima di rimetterla (o no)
   tempBulkText = tempBulkText.split('\n').filter(l => !l.trim().startsWith('🏖️ Ferie a ore')).join('\n');
 
-  if (tipo === 'orario') {
-    tempFerieOre = FERIE_ORARIO_STD;
-    const label = `🏖️ Ferie a ore (${decimalToOreLabel(FERIE_ORARIO_STD)})`;
+  if (tipo === 'orario' || tipo === 'orario7') {
+    tempFerieOre = tipo === 'orario' ? FERIE_ORARIO_STD : FERIE_ORARIO_7ORE;
+    const label = `🏖️ Ferie a ore (${decimalToOreLabel(tempFerieOre)})`;
     tempBulkText = tempBulkText ? tempBulkText + '\n' + label : label;
   } else {
     tempFerieOre = null;
