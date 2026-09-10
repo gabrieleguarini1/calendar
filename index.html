@@ -238,14 +238,15 @@
   .today-ring::after {
     content: '';
     position: absolute; inset: -2px;
-    border: 2px solid var(--primary);
+    border: 3px solid var(--primary);
     border-radius: 8px;
     pointer-events: none; z-index: 3;
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.25), 0 0 12px 2px rgba(124,92,252,0.5);
     animation: todayPulse 2.4s ease-in-out infinite;
   }
   @keyframes todayPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(124,92,252,0.55); border-color: var(--primary); }
-    50% { box-shadow: 0 0 16px 3px rgba(124,92,252,0.55); border-color: var(--accent-cyan); }
+    0%, 100% { box-shadow: 0 0 0 3px rgba(124,92,252,0.25), 0 0 12px 2px rgba(124,92,252,0.5); border-color: var(--primary); }
+    50% { box-shadow: 0 0 0 5px rgba(34,211,238,0.3), 0 0 22px 6px rgba(34,211,238,0.65); border-color: var(--accent-cyan); }
   }
   .today-ring .day-num {
     position: relative; z-index: 4;
@@ -385,7 +386,7 @@
     .task-chip { padding: 1px 3px 1px 4px; margin-bottom: 2px; gap: 3px; }
     .task-x { width: 11px; height: 11px; font-size: 8px; }
     .today-ring::before { background-image: repeating-linear-gradient(-45deg, var(--primary) 0, var(--primary) 4px, transparent 4px, transparent 11px); }
-    .today-ring::after { inset: -1px; border-width: 2px; border-radius: 6px; }
+    .today-ring::after { inset: -1px; border-width: 2.5px; border-radius: 6px; }
     .today-ring .day-num { min-width: 20px; height: 20px; font-size: 12px; }
   }
 </style>
@@ -1207,6 +1208,7 @@ function render() {
         let cd = d + i;
         if(cd > 0 && cd <= daysInM) {
           const k = `${currentYear}-${m}-${cd}-bottom`;
+          const isT = currentYear===ty && (m-1)===tm && cd===td;
           const user = db[k] || {};
           let hexCol = user.color && user.color!=='none' ? COLORS.find(c=>c.id===user.color).hex : 'none';
           let bgStyle = hexCol;
@@ -1223,7 +1225,7 @@ function render() {
           const chipXBg = isDarkBg ? 'rgba(255,255,255,0.35)' : 'rgba(17,24,39,0.18)';
           const lines = (user.text||'').split('\n').filter(l => l.trim() !== '');
           const htmlTasks = lines.map((l, idx) => `<div class="task-chip" style="background:${chipBg};"><span class="task-text">${escapeHtml(l)}</span><span class="task-x" style="background:${chipXBg};" onclick="deleteTaskLine('${k}', ${idx}, event)">×</span></div>`).join('');
-          h += `<div class="cell note-cell" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
+          h += `<div class="cell note-cell ${isT?'today-ring':''}" style="background:${bgStyle}; color:${textCol}; ${textShadow}" data-key="${k}">${htmlTasks}</div>`;
         } else h += `<div class="cell empty"></div>`;
       }
       h += `</div>`; d += 7;
