@@ -212,6 +212,10 @@
 
   .day-cell { height: 40px; border-bottom: 1px solid var(--grid-border); display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
   .day-num { font-weight: 700; font-size: 17px; }
+  .day-cell::after, .note-cell::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(160deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0) 55%);
+  }
 
   .note-cell { height: 96px; border-bottom: 1px solid var(--grid-border); font-size: 11px; font-weight: 500; text-align: left; padding: 6px; display: block; line-height: 1.4; transition: background 0.3s; overflow-y: auto; }
   .note-cell::-webkit-scrollbar { width: 4px; }
@@ -608,29 +612,31 @@ function login() {
 
 function logout() { auth.signOut(); initialLoad = true; }
 
-// Palette tenue/moderna: stessa mappatura semantica di prima (mattina=azzurro,
-// pomeriggio=arancio, smart=rosso, ferie=grigio, ecc.) con toni più morbidi.
-const AUTO_COLOR_A = '#CFE6F8'; // mattina (settimane pari)
-const AUTO_COLOR_B = '#FBDDBA'; // pomeriggio (settimane dispari)
+// Palette "liquid glass" in stile Apple: colori di sistema iOS resi trasparenti
+// (rgba) così lasciano intravedere il vetro sfumato sotto, invece di blocchi
+// pieni. Stessa mappatura semantica di prima (mattina=azzurro, pomeriggio=arancio,
+// smart=rosso, ferie=grigio, corso=azzurro acceso, festività=verde, ecc.).
+const AUTO_COLOR_A = 'rgba(0, 122, 255, 0.55)';   // mattina — systemBlue, velo trasparente
+const AUTO_COLOR_B = 'rgba(255, 149, 0, 0.50)';   // pomeriggio — systemOrange, velo trasparente
 
 const COLORS = [
   {id:'none', label:'Vuoto', hex:'none', autoText: '', isAdd: false},
   {id:'mattina', label:'Mattina', hex: AUTO_COLOR_A, autoText: '', isAdd: false},
   {id:'pomeriggio', label:'Pom.', hex: AUTO_COLOR_B, autoText: '', isAdd: false},
-  {id:'smart', label:'Smart', hex:'#E0785F', autoText: '', isAdd: false},
-  {id:'ferie', label:'Ferie', hex:'#5B6B80', autoText: '', isAdd: false},
-  {id:'possferie', label:'Poss. Ferie', hex:'repeating-linear-gradient(-45deg, #C7CED8 0, #C7CED8 6px, #ffffff 6px, #ffffff 14px)', autoText: '', isAdd: false},
+  {id:'smart', label:'Smart', hex:'rgba(255, 69, 58, 0.78)', autoText: '', isAdd: false},
+  {id:'ferie', label:'Ferie', hex:'rgba(99, 99, 115, 0.72)', autoText: '', isAdd: false},
+  {id:'possferie', label:'Poss. Ferie', hex:'repeating-linear-gradient(-45deg, rgba(142,142,147,0.45) 0, rgba(142,142,147,0.45) 6px, rgba(255,255,255,0.15) 6px, rgba(255,255,255,0.15) 14px)', autoText: '', isAdd: false},
   {id:'treno1', label:'🚂 8.52', hex:'none', autoText: '🚂 8.52', isAdd: true},
   {id:'treno2', label:'🚂 15.05', hex:'none', autoText: '🚂 15.05', isAdd: true},
-  {id:'corso', label:'Corso', hex:'#5B9BD6', autoText: 'Corso', isAdd: false},
-  {id:'allatto', label:'Allatto', hex:'#A583CC', autoText: '🟣', isAdd: true},
-  {id:'festivita', label:'Festività', hex:'#BDF0D6', autoText: '', isAdd: false},
+  {id:'corso', label:'Corso', hex:'rgba(10, 132, 255, 0.78)', autoText: 'Corso', isAdd: false},
+  {id:'allatto', label:'Allatto', hex:'rgba(191, 90, 242, 0.75)', autoText: '🟣', isAdd: true},
+  {id:'festivita', label:'Festività', hex:'rgba(52, 199, 89, 0.45)', autoText: '', isAdd: false},
   {id:'stipendio', label:'Stipendio 💰', hex:'none', autoText: 'Stipendio 💰', isAdd: true},
   {id:'permesso', label:'Permesso', hex:'none', autoText: '', isAdd: true}
 ];
 
-const darkBgColors = ['#E0785F', '#5B6B80', '#5B9BD6', '#A583CC'];
-const lightBgColors = [AUTO_COLOR_A, AUTO_COLOR_B, '#ffffff', '#BDF0D6'];
+const darkBgColors = ['rgba(255, 69, 58, 0.78)', 'rgba(99, 99, 115, 0.72)', 'rgba(10, 132, 255, 0.78)', 'rgba(191, 90, 242, 0.75)', AUTO_COLOR_A];
+const lightBgColors = [AUTO_COLOR_B, '#ffffff', 'rgba(52, 199, 89, 0.45)'];
 
 // "Poss. Ferie" ha uno sfondo a bande (grigio ferie + bianco): un testo scuro con un
 // alone bianco a 4 direzioni resta leggibile sia sopra la banda grigia che su quella bianca.
